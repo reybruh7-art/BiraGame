@@ -9,7 +9,6 @@
   body, html { width: 100%; height: 100%; overflow: hidden; background: #68abf7; touch-action: none; font-family: 'Segoe UI', system-ui, sans-serif; }
   canvas { display: block; width: 100vw; height: 100vh; }
 
-  /* UI Header */
   #ui {
     position: fixed;
     top: max(14px, env(safe-area-inset-top));
@@ -27,7 +26,6 @@
   }
   .tag { background: rgba(20, 45, 20, 0.6); padding: 6px 14px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.4); backdrop-filter: blur(4px); }
 
-  /* Tombol Kontrol Android */
   #controls {
     position: fixed;
     inset: 0;
@@ -79,7 +77,6 @@
     background: #47cc6c;
   }
 
-  /* Pop up Login / Register Awal */
   #auth-modal {
     position: fixed;
     inset: 0;
@@ -131,7 +128,6 @@
     font-weight: 600;
   }
 
-  /* Pop up Kemenangan & Game Over (Semua Teks Rapi di Center) */
   #win-screen {
     position: fixed;
     inset: 0;
@@ -206,7 +202,6 @@
 <canvas id="game"></canvas>
 
 <script>
-// --- SISTEM AKUN & PROGRESS LOKAL ---
 let currentUser = null;
 let isRegisterMode = false;
 let currentLevel = 1;
@@ -255,7 +250,6 @@ function saveUserProgress() {
   }
 }
 
-// --- Web Audio API Synth ---
 let audioCtx = null;
 function initAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -301,6 +295,15 @@ function playSound(type) {
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(now); osc.stop(now + 0.15);
+  } else if (type === "die") {
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(80, now + 0.25);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.25);
   } else if (type === "win") {
     [293, 369, 440, 587, 739, 880].forEach((f, i) => {
       const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
@@ -320,7 +323,6 @@ function resize() { canvas.width = window.innerWidth; canvas.height = window.inn
 resize();
 window.addEventListener("resize", resize);
 
-// Asset SVG BIRA Asli
 const biraSVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 550" width="400" height="550">
   <path d="M200,120 Q190,40 240,10 Q265,50 220,120 Z" fill="#88d813" stroke="#5da107" stroke-width="5"/>
@@ -387,7 +389,6 @@ function loadLevel(lvl) {
   document.getElementById("win-screen").style.display = "none";
 
   if (lvl === 1) {
-    // LEVEL 1: VALLEY SIANG HARI
     document.body.style.background = "#68abf7";
     grounds = [
       { x1: 0, x2: 950 },
@@ -461,32 +462,30 @@ function loadLevel(lvl) {
       { kind: "snail", x: 4600, y: 0, w: 42, h: 38, vx: -1.5, state: "walk", minX: 4450, maxX: 4900 }
     ];
   } else {
-    // LEVEL 2: NIGHT VALLEY (LEBIH MENANTANG, LANGIT MALAM)
+    // LEVEL 2: NIGHT VALLEY (Semua balok dan platform disusun terpisah & tidak bertumpuk)
     document.body.style.background = "#142850";
     grounds = [
-      { x1: 0, x2: 800 },
-      { x1: 1000, x2: 2000 },
+      { x1: 0, x2: 750 },
+      { x1: 950, x2: 2000 },
       { x1: 2250, x2: 3400 },
       { x1: 3700, x2: 5200 },
       { x1: 5500, x2: 7000 }
     ];
     blocks = [
+      // Balok koin digantung tinggi di atas kepala, bukan di atas platform bergerak
       { x: 250, y: 130, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
-      { x: 400, y: 150, w: 46, h: 44, type: "stone" },
-      { x: 446, y: 150, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
+      { x: 400, y: 140, w: 46, h: 44, type: "stone" },
+      { x: 446, y: 140, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
       { x: 600, y: 0, w: 70, h: 90, type: "stump" },
-      { x: 880, y: 160, w: 48, h: 44, type: "clover", hit: false, bumpY: 0 },
       { x: 1200, y: 140, w: 46, h: 44, type: "stone" },
       { x: 1246, y: 140, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
       { x: 1450, y: 0, w: 70, h: 160, type: "stump" },
       { x: 1700, y: 140, w: 46, h: 44, type: "stone" },
       { x: 1746, y: 230, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
-      { x: 2100, y: 140, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
       { x: 2450, y: 0, w: 70, h: 110, type: "stump" },
       { x: 2700, y: 140, w: 46, h: 44, type: "stone" },
       { x: 2746, y: 140, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
       { x: 3000, y: 160, w: 46, h: 44, type: "stone" },
-      { x: 3500, y: 160, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
       { x: 3900, y: 0, w: 70, h: 130, type: "stump" },
       { x: 4200, y: 140, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
       { x: 4246, y: 140, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
@@ -499,11 +498,12 @@ function loadLevel(lvl) {
       { x: 6300, y: 0, w: 22, h: 320, type: "finish_tree", leafY: 300 },
       { x: 6450, y: 0, w: 180, h: 170, type: "sanctuary" }
     ];
+    // Platform bergerak berada di celah jurang terbuka
     movingPlatforms = [
-      { x: 880, y: 100, w: 85, h: 18, minY: 60, maxY: 220, vy: 1.8 },
-      { x: 2100, y: 90, w: 85, h: 18, minY: 70, maxY: 230, vy: 1.9 },
-      { x: 3500, y: 110, w: 85, h: 18, minY: 80, maxY: 240, vy: 2.1 },
-      { x: 5300, y: 100, w: 85, h: 18, minY: 60, maxY: 230, vy: 2.0 }
+      { x: 820, y: 100, w: 85, h: 18, minY: 60, maxY: 210, vy: 1.8 },
+      { x: 2100, y: 90, w: 85, h: 18, minY: 70, maxY: 220, vy: 1.9 },
+      { x: 3500, y: 110, w: 85, h: 18, minY: 80, maxY: 230, vy: 2.1 },
+      { x: 5320, y: 100, w: 85, h: 18, minY: 60, maxY: 220, vy: 2.0 }
     ];
     enemies = [
       { kind: "snail", x: 450, y: 0, w: 42, h: 38, vx: -1.6, state: "walk", minX: 300, maxX: 650 },
@@ -516,7 +516,6 @@ function loadLevel(lvl) {
   }
 }
 
-// Input Touch & Keyboard
 const keys = { left: false, right: false };
 function handleJumpPress() {
   initAudio();
@@ -666,9 +665,11 @@ function update() {
   });
 
   if (player.y > canvas.height + 80) {
+    playSound("die");
     loadLevel(currentLevel);
   }
 
+  // --- LOGIKA TABRAKAN MUSUH: DETEKSI INJAK VS MATI TERTABRAK ---
   enemies.forEach(e => {
     if (e.kind === "bird") e.wingAngle = (e.wingAngle || 0) + 0.22;
     const isDefeatedState = (e.state === "shell" || e.state === "slide");
@@ -685,12 +686,16 @@ function update() {
       e.x += e.vx;
     }
 
-    if (player.x + player.w > e.x && player.x < e.x + e.w && player.y + player.h > eGroundY && player.y < eGroundY + eH + 4) {
-      const isFallingOnTop = (player.vy >= 0) || (player.y + player.h <= eGroundY + 16);
-      if (isFallingOnTop) {
+    // Deteksi Tabrakan Fisik
+    if (player.x + player.w > e.x && player.x < e.x + e.w && player.y + player.h > eGroundY && player.y < eGroundY + eH) {
+      // 1. INJAK DARI ATAS: Pemain WAJIB sedang jatuh ke bawah (vy > 0.8) dan kaki pemain berada di bagian atas musuh
+      const isStomp = (player.vy > 0.8) && (player.y + player.h - player.vy <= eGroundY + 14);
+
+      if (isStomp) {
         player.vy = -10.5;
         player.jumpsLeft = 2;
-        player.safeTimer = 15;
+        player.safeTimer = 16;
+
         if (e.state === "walk" || e.state === "fly") {
           e.state = "shell";
           e.vx = 0;
@@ -704,13 +709,19 @@ function update() {
           e.vx = 0;
           playSound("bounce");
         }
-      } else if (player.safeTimer === 0) {
+      } 
+      // 2. TABRAKAN SAMPING / JALAN DI LANTAI
+      else if (player.safeTimer === 0) {
         if (e.state === "shell") {
+          // Menendang cangkang diam: Bira aman & cangkang meluncur
           e.state = "slide";
           e.vx = (player.x + player.w / 2 < e.x + e.w / 2) ? 8.5 : -8.5;
           player.safeTimer = 12;
           playSound("slide");
-        } else if (e.state === "walk" || e.state === "fly" || e.state === "slide") {
+        } 
+        else if (e.state === "walk" || e.state === "fly" || e.state === "slide") {
+          // BIRA MATI TERTABRAK SIPUT / BURUNG AKTIF / CANGKANG MELUNCUR!
+          playSound("die");
           loadLevel(currentLevel);
         }
       }
@@ -780,7 +791,6 @@ function draw() {
   ctx.save();
   ctx.translate(-cameraX, 0);
 
-  // Awan Alam / Bulan di Malam Hari
   if (currentLevel === 1) {
     ctx.fillStyle = "#ffffffaa";
     for (let i = 0; i < 40; i++) {
@@ -792,7 +802,6 @@ function draw() {
       ctx.fill();
     }
   } else {
-    // Bulan Malam
     ctx.fillStyle = "#f4f6f7";
     ctx.beginPath(); ctx.arc(cameraX + canvas.width * 0.75, 90, 42, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#ffffff33";
@@ -801,7 +810,6 @@ function draw() {
     }
   }
 
-  // Lapisan Tanah
   grounds.forEach(g => {
     ctx.fillStyle = (currentLevel === 1) ? "#48a825" : "#1e4d2b";
     ctx.fillRect(g.x1, groundLevel, g.x2 - g.x1, 22);
