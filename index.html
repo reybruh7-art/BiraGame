@@ -26,7 +26,6 @@
   }
   .tag { background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.4); }
 
-  /* Tombol Kontrol yang Ringan & Berjarak dari Track */
   #controls {
     position: fixed;
     inset: 0;
@@ -258,7 +257,6 @@ const player = {
 
 const popCoins = [];
 
-// Lintasan tanah panjang (6500px)
 const grounds = [
   { x1: 0, x2: 950 },
   { x1: 1100, x2: 2200 },
@@ -268,30 +266,26 @@ const grounds = [
 ];
 
 let blocks = [];
-let turtles = [];
+let enemies = [];
 let movingPlatforms = [];
 
 function initWorld() {
-  // Posisikan balok gantung agar mudah disundul dari bawah tanpa menghalangi jalan
   blocks = [
-    // Area 1: Balok Gantung yang pas untuk disundul
+    // Area 1
     { x: 260, y: 120, w: 46, h: 44, type: "brick" },
     { x: 306, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
     { x: 352, y: 120, w: 46, h: 44, type: "brick" },
-    { x: 306, y: 220, w: 46, h: 44, type: "q", hit: false, bumpY: 0 }, // Balok atas tinggi
+    { x: 306, y: 220, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
 
     { x: 470, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
     { x: 516, y: 120, w: 46, h: 44, type: "brick" },
     { x: 562, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
 
-    // Pipa Rintangan
     { x: 740, y: 0, w: 66, h: 68, type: "pipe" },
     { x: 900, y: 0, w: 66, h: 105, type: "pipe" },
 
-    // Balok Penyeberangan Jurang
     { x: 1010, y: 135, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
 
-    // Platform Gantung
     { x: 1220, y: 125, w: 46, h: 44, type: "brick" },
     { x: 1266, y: 125, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
     { x: 1312, y: 125, w: 46, h: 44, type: "brick" },
@@ -299,7 +293,7 @@ function initWorld() {
 
     { x: 1500, y: 0, w: 68, h: 135, type: "pipe" },
 
-    // Tangga Piramida Pertama
+    // Piramida Pertama
     { x: 1720, y: 0, w: 40, h: 40, type: "brick" },
     { x: 1760, y: 0, w: 40, h: 80, type: "brick" },
     { x: 1800, y: 0, w: 40, h: 120, type: "brick" },
@@ -309,7 +303,6 @@ function initWorld() {
     { x: 2040, y: 0, w: 40, h: 80, type: "brick" },
     { x: 2080, y: 0, w: 40, h: 40, type: "brick" },
 
-    // Area Ekstensi Baru
     { x: 2520, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
     { x: 2566, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
     { x: 2612, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
@@ -317,14 +310,12 @@ function initWorld() {
     { x: 2800, y: 0, w: 68, h: 85, type: "pipe" },
     { x: 3000, y: 0, w: 68, h: 150, type: "pipe" },
 
-    // Jembatan Gantung
     { x: 3180, y: 135, w: 46, h: 44, type: "brick" },
     { x: 3226, y: 135, w: 46, h: 44, type: "brick" },
     { x: 3272, y: 135, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
     { x: 3318, y: 135, w: 46, h: 44, type: "brick" },
     { x: 3364, y: 135, w: 46, h: 44, type: "brick" },
 
-    // Balok di Tengah Jurang Lebar
     { x: 3660, y: 145, w: 46, h: 44, type: "brick" },
     { x: 3740, y: 165, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
     { x: 3820, y: 145, w: 46, h: 44, type: "brick" },
@@ -335,7 +326,6 @@ function initWorld() {
     { x: 4352, y: 130, w: 46, h: 44, type: "brick" },
     { x: 4420, y: 0, w: 68, h: 125, type: "pipe" },
 
-    // Tangga Akhir Menuju Tiang Finish
     { x: 5350, y: 0, w: 40, h: 40, type: "brick" },
     { x: 5390, y: 0, w: 40, h: 80, type: "brick" },
     { x: 5430, y: 0, w: 40, h: 120, type: "brick" },
@@ -344,7 +334,6 @@ function initWorld() {
     { x: 5550, y: 0, w: 40, h: 240, type: "brick" },
     { x: 5590, y: 0, w: 40, h: 280, type: "brick" },
 
-    // Tiang Finish & Kastil
     { x: 6000, y: 0, w: 20, h: 320, type: "flagpole", flagY: 300 },
     { x: 6150, y: 0, w: 180, h: 160, type: "castle" }
   ];
@@ -354,13 +343,19 @@ function initWorld() {
     { x: 5070, y: 100, w: 85, h: 18, minY: 70, maxY: 230, vy: 1.5 }
   ];
 
-  turtles = [
-    { x: 500, y: 0, w: 42, h: 44, vx: -1.3, state: "walk", minX: 420, maxX: 700 },
-    { x: 1360, y: 0, w: 42, h: 44, vx: -1.4, state: "walk", minX: 1120, maxX: 1650 },
-    { x: 1900, y: 160, w: 42, h: 44, vx: 1.2, state: "walk", minX: 1840, maxX: 1960 },
-    { x: 2700, y: 0, w: 42, h: 44, vx: -1.3, state: "walk", minX: 2450, maxX: 2950 },
-    { x: 3250, y: 135, w: 42, h: 44, vx: 1.0, state: "walk", minX: 3180, maxX: 3410 },
-    { x: 4600, y: 0, w: 42, h: 44, vx: -1.6, state: "walk", minX: 4450, maxX: 4900 }
+  // Musuh: Kura-kura di darat & Burung di udara
+  enemies = [
+    // Kura-kura darat
+    { kind: "turtle", x: 500, y: 0, w: 42, h: 44, vx: -1.3, state: "walk", minX: 420, maxX: 700 },
+    { kind: "turtle", x: 1360, y: 0, w: 42, h: 44, vx: -1.4, state: "walk", minX: 1120, maxX: 1650 },
+    
+    // Burung Melayang di Udara (Menggantikan kura-kura melayang)
+    { kind: "bird", x: 1900, y: 180, w: 44, h: 36, vx: 1.3, state: "fly", minX: 1800, maxX: 2100, wingAngle: 0 },
+    { kind: "bird", x: 3250, y: 190, w: 44, h: 36, vx: 1.2, state: "fly", minX: 3160, maxX: 3430, wingAngle: 0 },
+
+    // Musuh darat lainnya
+    { kind: "turtle", x: 2700, y: 0, w: 42, h: 44, vx: -1.3, state: "walk", minX: 2450, maxX: 2950 },
+    { kind: "turtle", x: 4600, y: 0, w: 42, h: 44, vx: -1.6, state: "walk", minX: 4450, maxX: 4900 }
   ];
 }
 initWorld();
@@ -422,7 +417,6 @@ function restartGame() {
 function update() {
   if (gameFinished) return;
 
-  // Tinggi track dinaikkan agar tidak tertutup tombol kontrol layar
   const groundLevel = canvas.height - 150;
 
   if (keys.left) {
@@ -483,15 +477,12 @@ function update() {
 
     if (player.x + player.w > b.x + 3 && player.x < b.x + b.w - 3) {
       if (player.y + player.h >= bY && player.y < bY + bH) {
-        // Mendarat di atas balok
         if (player.vy > 0 && (player.y + player.h - player.vy) <= bY + 14) {
           player.y = bY - player.h;
           player.vy = 0;
           player.grounded = true;
           player.jumpsLeft = 2;
-        } 
-        // Menyundul balok dari bawah
-        else if (player.vy < 0 && (player.y - player.vy) >= bY + bH - 14) {
+        } else if (player.vy < 0 && (player.y - player.vy) >= bY + bH - 14) {
           player.y = bY + bH;
           player.vy = 2;
           if (b.type === "q" && !b.hit) {
@@ -507,7 +498,6 @@ function update() {
     }
   });
 
-  // Pijakan di Atas Platform Bergerak
   movingPlatforms.forEach(p => {
     let pY = groundLevel - p.y;
     if (player.x + player.w > p.x && player.x < p.x + p.w) {
@@ -525,7 +515,6 @@ function update() {
     else b.bumpY = 0;
   });
 
-  // Pijakan Tanah & Jurang
   grounds.forEach(g => {
     if (player.x + player.w / 2 >= g.x1 && player.x + player.w / 2 <= g.x2) {
       if (player.y + player.h >= groundLevel) {
@@ -541,51 +530,59 @@ function update() {
     restartGame();
   }
 
-  // --- Logika Kura-kura yang Telah Diperbaiki (Anti Bug Mati Sendiri) ---
-  turtles.forEach(t => {
-    let tGroundY = groundLevel - t.y - (t.state === "walk" ? 44 : 28);
-    t.actualY = tGroundY;
-    const tH = (t.state === "walk") ? 44 : 28;
-
-    if (t.state === "walk") {
-      t.x += t.vx;
-      if (t.x < t.minX || t.x > t.maxX) t.vx *= -1;
-    } else if (t.state === "slide") {
-      t.x += t.vx;
+  // --- Update Musuh (Kura-Kura & Burung) ---
+  enemies.forEach(e => {
+    if (e.kind === "bird") {
+      // Burung mengepakkan sayap
+      e.wingAngle = (e.wingAngle || 0) + 0.2;
     }
 
-    // Cek Benturan Pemain dengan Kura-kura
-    if (player.x + player.w > t.x && player.x < t.x + t.w && player.y + player.h > tGroundY && player.y < tGroundY + tH) {
-      // 1. Pemain melompat menginjak dari atas
-      if (player.vy > 0 && (player.y + player.h - player.vy) <= tGroundY + 18) {
+    let isShell = (e.state === "shell" || e.state === "slide");
+    let eH = isShell ? 28 : (e.kind === "bird" ? 34 : 44);
+    
+    // Jatuh ke lantai saat berubah jadi telur/shell
+    if (isShell && e.y > 0) {
+      e.y = Math.max(0, e.y - 4);
+    }
+
+    let eGroundY = groundLevel - e.y - eH;
+    e.actualY = eGroundY;
+
+    if (e.state === "walk" || e.state === "fly") {
+      e.x += e.vx;
+      if (e.x < e.minX || e.x > e.maxX) e.vx *= -1;
+    } else if (e.state === "slide") {
+      e.x += e.vx;
+    }
+
+    // Interaksi Pemain dengan Musuh
+    if (player.x + player.w > e.x && player.x < e.x + e.w && player.y + player.h > eGroundY && player.y < eGroundY + eH) {
+      // Menginjak dari atas
+      if (player.vy > 0 && (player.y + player.h - player.vy) <= eGroundY + 18) {
         player.vy = -10.5;
         player.jumpsLeft = 2;
 
-        if (t.state === "walk") {
-          t.state = "shell";
-          t.vx = 0;
+        if (e.state === "walk" || e.state === "fly") {
+          e.state = "shell";
+          e.vx = 0;
           playSound("stomp");
-        } else if (t.state === "shell") {
-          // Dari diam menjadi meluncur
-          t.state = "slide";
-          t.vx = (player.x + player.w / 2 < t.x + t.w / 2) ? 8.5 : -8.5;
+        } else if (e.state === "shell") {
+          e.state = "slide";
+          e.vx = (player.x + player.w / 2 < e.x + e.w / 2) ? 8.5 : -8.5;
           playSound("kick");
-        } else if (t.state === "slide") {
-          // Menghentikan tempurung yang sedang meluncur
-          t.state = "shell";
-          t.vx = 0;
+        } else if (e.state === "slide") {
+          e.state = "shell";
+          e.vx = 0;
           playSound("stomp");
         }
       } 
-      // 2. Pemain bersentuhan dari samping
+      // Menyentuh dari samping
       else {
-        if (t.state === "shell") {
-          // Menendang tempurung diam ke depan (Bira TIDAK mati!)
-          t.state = "slide";
-          t.vx = (player.x + player.w / 2 < t.x + t.w / 2) ? 8.5 : -8.5;
+        if (e.state === "shell") {
+          e.state = "slide";
+          e.vx = (player.x + player.w / 2 < e.x + e.w / 2) ? 8.5 : -8.5;
           playSound("kick");
-        } else if (t.state === "walk" || t.state === "slide") {
-          // Tertabrak kura-kura berjalan atau tempurung yang meluncur kencang
+        } else if (e.state === "walk" || e.state === "fly" || e.state === "slide") {
           restartGame();
         }
       }
@@ -608,50 +605,110 @@ function update() {
   if (camera.x < 0) camera.x = 0;
 }
 
-function drawTurtle(t) {
+function drawEnemy(e) {
   ctx.save();
-  ctx.translate(t.x, t.actualY);
+  ctx.translate(e.x, e.actualY);
 
-  if (t.state === "walk") {
-    if (t.vx > 0) { ctx.scale(-1, 1); ctx.translate(-t.w, 0); }
-    ctx.fillStyle = "#f5b041";
-    ctx.beginPath();
-    ctx.arc(8, 38, 7, 0, Math.PI * 2);
-    ctx.arc(34, 38, 7, 0, Math.PI * 2);
-    ctx.fill();
+  if (e.kind === "bird") {
+    // --- GAMBAR BURUNG ---
+    if (e.state === "fly") {
+      if (e.vx > 0) { ctx.scale(-1, 1); ctx.translate(-e.w, 0); }
+      
+      // Badan Burung
+      ctx.fillStyle = "#e67e22";
+      ctx.beginPath();
+      ctx.ellipse(22, 18, 16, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
 
-    ctx.fillStyle = "#27ae60";
-    ctx.beginPath();
-    ctx.ellipse(21, 22, 17, 16, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#145a32";
-    ctx.lineWidth = 3;
-    ctx.stroke();
+      // Perut Kuning
+      ctx.fillStyle = "#f1c40f";
+      ctx.beginPath();
+      ctx.ellipse(25, 22, 10, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
 
-    ctx.fillStyle = "#2ecc71";
-    ctx.beginPath();
-    ctx.arc(21, 22, 8, 0, Math.PI * 2);
-    ctx.fill();
+      // Sayap Beranimasi
+      const wingY = Math.sin(e.wingAngle) * 7;
+      ctx.fillStyle = "#d35400";
+      ctx.beginPath();
+      ctx.moveTo(14, 16);
+      ctx.lineTo(24, 6 + wingY);
+      ctx.lineTo(28, 16);
+      ctx.fill();
 
-    ctx.fillStyle = "#f5b041";
-    ctx.beginPath();
-    ctx.arc(2, 14, 10, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#000";
-    ctx.beginPath();
-    ctx.arc(0, 12, 2.5, 0, Math.PI * 2);
-    ctx.fill();
+      // Mata
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(10, 14, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#000";
+      ctx.beginPath();
+      ctx.arc(8.5, 14, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Paruh
+      ctx.fillStyle = "#f39c12";
+      ctx.beginPath();
+      ctx.moveTo(6, 15);
+      ctx.lineTo(-4, 18);
+      ctx.lineTo(6, 21);
+      ctx.fill();
+    } else {
+      // Telur / Tempurung Bulat Burung saat diinjak
+      ctx.fillStyle = "#e67e22";
+      ctx.beginPath();
+      ctx.ellipse(e.w / 2, 14, 18, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#a04000";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = "#f1c40f";
+      ctx.beginPath();
+      ctx.arc(e.w / 2, 14, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
   } else {
-    // Tempurung Diam / Meluncur
-    ctx.fillStyle = "#27ae60";
-    ctx.beginPath();
-    ctx.ellipse(t.w / 2, 14, 19, 13, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#145a32";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.fillStyle = "#f1c40f";
-    ctx.fillRect(4, 11, t.w - 8, 5);
+    // --- GAMBAR KURA-KURA ---
+    if (e.state === "walk") {
+      if (e.vx > 0) { ctx.scale(-1, 1); ctx.translate(-e.w, 0); }
+      ctx.fillStyle = "#f5b041";
+      ctx.beginPath();
+      ctx.arc(8, 38, 7, 0, Math.PI * 2);
+      ctx.arc(34, 38, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#27ae60";
+      ctx.beginPath();
+      ctx.ellipse(21, 22, 17, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#145a32";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = "#2ecc71";
+      ctx.beginPath();
+      ctx.arc(21, 22, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#f5b041";
+      ctx.beginPath();
+      ctx.arc(2, 14, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#000";
+      ctx.beginPath();
+      ctx.arc(0, 12, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = "#27ae60";
+      ctx.beginPath();
+      ctx.ellipse(e.w / 2, 14, 19, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#145a32";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = "#f1c40f";
+      ctx.fillRect(4, 11, e.w - 8, 5);
+    }
   }
   ctx.restore();
 }
@@ -674,7 +731,7 @@ function draw() {
     ctx.fill();
   }
 
-  // Tanah Rumput & Jurang yang Lebih Tinggi dari Tombol
+  // Tanah Rumput & Jurang
   grounds.forEach(g => {
     ctx.fillStyle = "#5cb82a";
     ctx.fillRect(g.x1, groundLevel, g.x2 - g.x1, 22);
@@ -754,7 +811,7 @@ function draw() {
     }
   });
 
-  turtles.forEach(drawTurtle);
+  enemies.forEach(drawEnemy);
 
   popCoins.forEach(c => {
     ctx.save();
@@ -770,7 +827,7 @@ function draw() {
     ctx.restore();
   });
 
-  // Gambar Karakter BIRA
+  // Gambar BIRA
   ctx.save();
   ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
   if (player.facing === -1) ctx.scale(-1, 1);
