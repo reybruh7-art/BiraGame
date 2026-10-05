@@ -11,21 +11,22 @@
 
   #ui {
     position: fixed;
-    top: max(16px, env(safe-area-inset-top));
-    left: 16px;
-    right: 16px;
+    top: max(14px, env(safe-area-inset-top));
+    left: 14px;
+    right: 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     color: white;
     font-weight: 900;
-    font-size: 17px;
+    font-size: 16px;
     text-shadow: 2px 2px 0 #000;
     pointer-events: none;
     z-index: 10;
   }
-  .tag { background: rgba(0,0,0,0.45); padding: 6px 14px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.4); }
+  .tag { background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.4); }
 
+  /* Tombol Kontrol yang Ringan & Berjarak dari Track */
   #controls {
     position: fixed;
     inset: 0;
@@ -34,43 +35,44 @@
   }
   .d-pad {
     position: absolute;
-    left: max(18px, env(safe-area-inset-left));
-    bottom: max(22px, env(safe-area-inset-bottom));
+    left: max(14px, env(safe-area-inset-left));
+    bottom: max(14px, env(safe-area-inset-bottom));
     display: flex;
-    gap: 14px;
+    gap: 12px;
     pointer-events: auto;
   }
   .btn-action {
     position: absolute;
-    right: max(22px, env(safe-area-inset-right));
-    bottom: max(22px, env(safe-area-inset-bottom));
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(14px, env(safe-area-inset-bottom));
     pointer-events: auto;
   }
   .touch-btn {
-    width: 72px;
-    height: 72px;
-    background: rgba(255, 255, 255, 0.45);
-    border: 3px solid #ffffff;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.8);
     border-radius: 50%;
     color: #fff;
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 900;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    backdrop-filter: blur(4px);
     touch-action: none;
   }
   .touch-btn:active {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.7);
     transform: scale(0.92);
   }
   #btn-jump {
-    width: 82px;
-    height: 82px;
-    background: #e52521;
-    border: 3.5px solid #fff;
-    font-size: 17px;
+    width: 72px;
+    height: 72px;
+    background: rgba(229, 37, 33, 0.85);
+    border: 3px solid #fff;
+    font-size: 15px;
   }
   #btn-jump:active {
     background: #ff5753;
@@ -98,14 +100,13 @@
     border: none;
     border-radius: 30px;
     color: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   }
 </style>
 </head>
 <body>
 
 <div id="ui">
-  <div class="tag">🌿 BIRA <span style="font-size:12px; color:#ffeb3b; margin-left:6px;">WORLD 1-1 EXTENDED</span></div>
+  <div class="tag">🌿 BIRA <span style="font-size:11px; color:#ffeb3b; margin-left:6px;">WORLD 1-1</span></div>
   <div class="tag" id="score-txt">🪙 COIN: 0</div>
 </div>
 
@@ -128,15 +129,11 @@
 <canvas id="game"></canvas>
 
 <script>
-// --- Web Audio API Synth (Tanpa File Eksternal) ---
+// Web Audio API Retro Sound
 let audioCtx = null;
 function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") audioCtx.resume();
 }
 
 function playSound(type) {
@@ -144,71 +141,54 @@ function playSound(type) {
   const now = audioCtx.currentTime;
 
   if (type === "jump") {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
     osc.type = "square";
-    osc.frequency.setValueAtTime(150, now);
-    osc.frequency.exponentialRampToValueAtTime(500, now + 0.12);
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(520, now + 0.12);
     gain.gain.setValueAtTime(0.2, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start(now);
-    osc.stop(now + 0.12);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.12);
   } else if (type === "coin") {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
     osc.type = "sine";
-    osc.frequency.setValueAtTime(987.77, now); // B5
-    osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+    osc.frequency.setValueAtTime(987, now);
+    osc.frequency.setValueAtTime(1318, now + 0.08);
     gain.gain.setValueAtTime(0.25, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start(now);
-    osc.stop(now + 0.35);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.35);
   } else if (type === "stomp") {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(260, now);
-    osc.frequency.exponentialRampToValueAtTime(70, now + 0.14);
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(80, now + 0.14);
     gain.gain.setValueAtTime(0.35, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start(now);
-    osc.stop(now + 0.14);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.14);
   } else if (type === "kick") {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
     osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(120, now);
-    osc.frequency.exponentialRampToValueAtTime(450, now + 0.18);
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.exponentialRampToValueAtTime(460, now + 0.16);
     gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start(now);
-    osc.stop(now + 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.16);
   } else if (type === "win") {
-    const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
-    notes.forEach((freq, i) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
+    [261, 329, 392, 523, 659, 783].forEach((f, i) => {
+      const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
       osc.type = "triangle";
-      osc.frequency.setValueAtTime(freq, now + i * 0.1);
-      gain.gain.setValueAtTime(0.25, now + i * 0.1);
+      osc.frequency.setValueAtTime(f, now + i * 0.1);
+      gain.gain.setValueAtTime(0.22, now + i * 0.1);
       gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.18);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now + i * 0.1);
-      osc.stop(now + i * 0.1 + 0.2);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now + i * 0.1); osc.stop(now + i * 0.1 + 0.2);
     });
   }
 }
 
-// --- Canvas & Visual Setup ---
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
@@ -219,7 +199,7 @@ function resize() {
 resize();
 window.addEventListener("resize", resize);
 
-// Karakter Bira Asli
+// Asset SVG BIRA Asli
 const biraSVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 550" width="400" height="550">
   <path d="M200,120 Q190,40 240,10 Q265,50 220,120 Z" fill="#88d813" stroke="#5da107" stroke-width="5"/>
@@ -258,7 +238,6 @@ const biraSVG = `
 const biraImg = new Image();
 biraImg.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(biraSVG);
 
-// Game Logic State
 let score = 0;
 let gameFinished = false;
 const gravity = 0.58;
@@ -266,12 +245,12 @@ const camera = { x: 0 };
 
 const player = {
   x: 80,
-  y: 200,
-  w: 40,
-  h: 58,
+  y: 100,
+  w: 38,
+  h: 56,
   vx: 0,
   vy: 0,
-  speed: 4.9,
+  speed: 4.8,
   grounded: false,
   jumpsLeft: 2,
   facing: 1
@@ -279,7 +258,7 @@ const player = {
 
 const popCoins = [];
 
-// Segmen Tanah & Jurang Diperpanjang Hingga 6500px
+// Lintasan tanah panjang (6500px)
 const grounds = [
   { x1: 0, x2: 950 },
   { x1: 1100, x2: 2200 },
@@ -293,108 +272,105 @@ let turtles = [];
 let movingPlatforms = [];
 
 function initWorld() {
+  // Posisikan balok gantung agar mudah disundul dari bawah tanpa menghalangi jalan
   blocks = [
-    // Area 1: Balok koin ganda dan bertingkat
-    { x: 260, y: 52, w: 48, h: 44, type: "brick" },
-    { x: 308, y: 52, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 356, y: 52, w: 48, h: 44, type: "brick" },
-    { x: 308, y: 156, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
+    // Area 1: Balok Gantung yang pas untuk disundul
+    { x: 260, y: 120, w: 46, h: 44, type: "brick" },
+    { x: 306, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 352, y: 120, w: 46, h: 44, type: "brick" },
+    { x: 306, y: 220, w: 46, h: 44, type: "q", hit: false, bumpY: 0 }, // Balok atas tinggi
 
-    { x: 470, y: 135, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 518, y: 135, w: 48, h: 44, type: "brick" },
-    { x: 566, y: 135, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 470, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 516, y: 120, w: 46, h: 44, type: "brick" },
+    { x: 562, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
 
-    // Pipa Rintangan Rendah-Tinggi
-    { x: 740, y: 0, w: 68, h: 72, type: "pipe" },
-    { x: 900, y: 0, w: 68, h: 110, type: "pipe" },
+    // Pipa Rintangan
+    { x: 740, y: 0, w: 66, h: 68, type: "pipe" },
+    { x: 900, y: 0, w: 66, h: 105, type: "pipe" },
 
-    // Balok Penyeberangan Jurang 1
-    { x: 1010, y: 140, w: 50, h: 44, type: "q", hit: false, bumpY: 0 },
+    // Balok Penyeberangan Jurang
+    { x: 1010, y: 135, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
 
     // Platform Gantung
-    { x: 1220, y: 130, w: 48, h: 44, type: "brick" },
-    { x: 1268, y: 130, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 1316, y: 130, w: 48, h: 44, type: "brick" },
-    { x: 1268, y: 235, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 1220, y: 125, w: 46, h: 44, type: "brick" },
+    { x: 1266, y: 125, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 1312, y: 125, w: 46, h: 44, type: "brick" },
+    { x: 1266, y: 225, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
 
-    { x: 1500, y: 0, w: 70, h: 140, type: "pipe" },
+    { x: 1500, y: 0, w: 68, h: 135, type: "pipe" },
 
     // Tangga Piramida Pertama
-    { x: 1720, y: 0, w: 42, h: 42, type: "brick" },
-    { x: 1762, y: 0, w: 42, h: 84, type: "brick" },
-    { x: 1804, y: 0, w: 42, h: 126, type: "brick" },
-    { x: 1846, y: 0, w: 42, h: 168, type: "brick" },
-    { x: 1960, y: 0, w: 42, h: 168, type: "brick" },
-    { x: 2002, y: 0, w: 42, h: 126, type: "brick" },
-    { x: 2044, y: 0, w: 42, h: 84, type: "brick" },
-    { x: 2086, y: 0, w: 42, h: 42, type: "brick" },
+    { x: 1720, y: 0, w: 40, h: 40, type: "brick" },
+    { x: 1760, y: 0, w: 40, h: 80, type: "brick" },
+    { x: 1800, y: 0, w: 40, h: 120, type: "brick" },
+    { x: 1840, y: 0, w: 40, h: 160, type: "brick" },
+    { x: 1960, y: 0, w: 40, h: 160, type: "brick" },
+    { x: 2000, y: 0, w: 40, h: 120, type: "brick" },
+    { x: 2040, y: 0, w: 40, h: 80, type: "brick" },
+    { x: 2080, y: 0, w: 40, h: 40, type: "brick" },
 
-    // Area Ekstensi Baru (2400px - 6500px)
-    { x: 2520, y: 120, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 2568, y: 120, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 2616, y: 120, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
+    // Area Ekstensi Baru
+    { x: 2520, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 2566, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 2612, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
 
-    { x: 2800, y: 0, w: 72, h: 90, type: "pipe" },
-    { x: 3000, y: 0, w: 72, h: 160, type: "pipe" },
+    { x: 2800, y: 0, w: 68, h: 85, type: "pipe" },
+    { x: 3000, y: 0, w: 68, h: 150, type: "pipe" },
 
-    // Jembatan Gantung Panjang
-    { x: 3180, y: 140, w: 48, h: 44, type: "brick" },
-    { x: 3228, y: 140, w: 48, h: 44, type: "brick" },
-    { x: 3276, y: 140, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 3324, y: 140, w: 48, h: 44, type: "brick" },
-    { x: 3372, y: 140, w: 48, h: 44, type: "brick" },
+    // Jembatan Gantung
+    { x: 3180, y: 135, w: 46, h: 44, type: "brick" },
+    { x: 3226, y: 135, w: 46, h: 44, type: "brick" },
+    { x: 3272, y: 135, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 3318, y: 135, w: 46, h: 44, type: "brick" },
+    { x: 3364, y: 135, w: 46, h: 44, type: "brick" },
 
-    // Jurang Lebar (3600 - 3900) dengan Balok Tengah
-    { x: 3660, y: 150, w: 48, h: 44, type: "brick" },
-    { x: 3740, y: 170, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 3820, y: 150, w: 48, h: 44, type: "brick" },
+    // Balok di Tengah Jurang Lebar
+    { x: 3660, y: 145, w: 46, h: 44, type: "brick" },
+    { x: 3740, y: 165, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 3820, y: 145, w: 46, h: 44, type: "brick" },
 
-    // Labirin Pipa & Bata Tinggi
-    { x: 4100, y: 0, w: 70, h: 80, type: "pipe" },
-    { x: 4260, y: 140, w: 48, h: 44, type: "brick" },
-    { x: 4308, y: 140, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 4356, y: 140, w: 48, h: 44, type: "brick" },
-    { x: 4420, y: 0, w: 70, h: 130, type: "pipe" },
+    { x: 4100, y: 0, w: 68, h: 80, type: "pipe" },
+    { x: 4260, y: 130, w: 46, h: 44, type: "brick" },
+    { x: 4306, y: 130, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 4352, y: 130, w: 46, h: 44, type: "brick" },
+    { x: 4420, y: 0, w: 68, h: 125, type: "pipe" },
 
-    // Tangga Besar Menuju Tiang Akhir
-    { x: 5350, y: 0, w: 42, h: 42, type: "brick" },
-    { x: 5392, y: 0, w: 42, h: 84, type: "brick" },
-    { x: 5434, y: 0, w: 42, h: 126, type: "brick" },
-    { x: 5476, y: 0, w: 42, h: 168, type: "brick" },
-    { x: 5518, y: 0, w: 42, h: 210, type: "brick" },
-    { x: 5560, y: 0, w: 42, h: 252, type: "brick" },
-    { x: 5602, y: 0, w: 42, h: 294, type: "brick" },
+    // Tangga Akhir Menuju Tiang Finish
+    { x: 5350, y: 0, w: 40, h: 40, type: "brick" },
+    { x: 5390, y: 0, w: 40, h: 80, type: "brick" },
+    { x: 5430, y: 0, w: 40, h: 120, type: "brick" },
+    { x: 5470, y: 0, w: 40, h: 160, type: "brick" },
+    { x: 5510, y: 0, w: 40, h: 200, type: "brick" },
+    { x: 5550, y: 0, w: 40, h: 240, type: "brick" },
+    { x: 5590, y: 0, w: 40, h: 280, type: "brick" },
 
-    // Finish Tiang Bendera & Kastil Megah
-    { x: 6000, y: 0, w: 20, h: 330, type: "flagpole", flagY: 310 },
+    // Tiang Finish & Kastil
+    { x: 6000, y: 0, w: 20, h: 320, type: "flagpole", flagY: 300 },
     { x: 6150, y: 0, w: 180, h: 160, type: "castle" }
   ];
 
-  // Platform Bergerak Vertikal (Lift Otomatis)
   movingPlatforms = [
-    { x: 2260, y: 90, w: 90, h: 20, minY: 60, maxY: 210, vy: 1.2 },
-    { x: 5070, y: 100, w: 90, h: 20, minY: 70, maxY: 230, vy: 1.5 }
+    { x: 2260, y: 90, w: 85, h: 18, minY: 60, maxY: 210, vy: 1.2 },
+    { x: 5070, y: 100, w: 85, h: 18, minY: 70, maxY: 230, vy: 1.5 }
   ];
 
-  // Musuh Kura-kura Lebih Banyak & Bervariasi
   turtles = [
-    { x: 500, y: 0, w: 44, h: 46, vx: -1.3, state: "walk", minX: 420, maxX: 700 },
-    { x: 1360, y: 0, w: 44, h: 46, vx: -1.4, state: "walk", minX: 1120, maxX: 1650 },
-    { x: 1900, y: 168, w: 44, h: 46, vx: 1.2, state: "walk", minX: 1846, maxX: 1960 },
-    { x: 2700, y: 0, w: 44, h: 46, vx: -1.3, state: "walk", minX: 2450, maxX: 2950 },
-    { x: 3250, y: 140, w: 44, h: 46, vx: 1.0, state: "walk", minX: 3180, maxX: 3410 },
-    { x: 4600, y: 0, w: 44, h: 46, vx: -1.6, state: "walk", minX: 4450, maxX: 4900 }
+    { x: 500, y: 0, w: 42, h: 44, vx: -1.3, state: "walk", minX: 420, maxX: 700 },
+    { x: 1360, y: 0, w: 42, h: 44, vx: -1.4, state: "walk", minX: 1120, maxX: 1650 },
+    { x: 1900, y: 160, w: 42, h: 44, vx: 1.2, state: "walk", minX: 1840, maxX: 1960 },
+    { x: 2700, y: 0, w: 42, h: 44, vx: -1.3, state: "walk", minX: 2450, maxX: 2950 },
+    { x: 3250, y: 135, w: 42, h: 44, vx: 1.0, state: "walk", minX: 3180, maxX: 3410 },
+    { x: 4600, y: 0, w: 42, h: 44, vx: -1.6, state: "walk", minX: 4450, maxX: 4900 }
   ];
 }
 initWorld();
 
-// Input Touch & Keyboard
 const keys = { left: false, right: false };
 
 function handleJumpPress() {
   initAudio();
   if (player.jumpsLeft > 0) {
-    player.vy = -13.3;
+    player.vy = -13.2;
     player.jumpsLeft--;
     player.grounded = false;
     playSound("jump");
@@ -432,7 +408,7 @@ window.addEventListener("keyup", e => {
 
 function restartGame() {
   player.x = 80;
-  player.y = 200;
+  player.y = 100;
   player.vx = 0;
   player.vy = 0;
   player.jumpsLeft = 2;
@@ -446,9 +422,9 @@ function restartGame() {
 function update() {
   if (gameFinished) return;
 
-  const groundLevel = canvas.height - 90;
+  // Tinggi track dinaikkan agar tidak tertutup tombol kontrol layar
+  const groundLevel = canvas.height - 150;
 
-  // Gerakan Horizontal
   if (keys.left) {
     player.vx = -player.speed;
     player.facing = -1;
@@ -461,7 +437,6 @@ function update() {
 
   player.vy += gravity;
 
-  // Update Gerak Platform Mengambang
   movingPlatforms.forEach(p => {
     p.y += p.vy;
     if (p.y > p.maxY || p.y < p.minY) p.vy *= -1;
@@ -493,7 +468,6 @@ function update() {
     let bY = groundLevel - (b.type === "flagpole" || b.type === "castle" ? b.h : b.type === "pipe" ? b.h : b.y);
     let bH = b.h;
 
-    // Tiang Finish
     if (b.type === "flagpole") {
       if (player.x + player.w >= b.x && player.x <= b.x + b.w && player.y + player.h >= bY) {
         gameFinished = true;
@@ -509,12 +483,15 @@ function update() {
 
     if (player.x + player.w > b.x + 3 && player.x < b.x + b.w - 3) {
       if (player.y + player.h >= bY && player.y < bY + bH) {
+        // Mendarat di atas balok
         if (player.vy > 0 && (player.y + player.h - player.vy) <= bY + 14) {
           player.y = bY - player.h;
           player.vy = 0;
           player.grounded = true;
           player.jumpsLeft = 2;
-        } else if (player.vy < 0 && (player.y - player.vy) >= bY + bH - 14) {
+        } 
+        // Menyundul balok dari bawah
+        else if (player.vy < 0 && (player.y - player.vy) >= bY + bH - 14) {
           player.y = bY + bH;
           player.vy = 2;
           if (b.type === "q" && !b.hit) {
@@ -530,13 +507,13 @@ function update() {
     }
   });
 
-  // Pijakan di Atas Platform Mengambang (Lift)
+  // Pijakan di Atas Platform Bergerak
   movingPlatforms.forEach(p => {
     let pY = groundLevel - p.y;
     if (player.x + player.w > p.x && player.x < p.x + p.w) {
       if (player.vy >= 0 && player.y + player.h >= pY && player.y + player.h - player.vy <= pY + 14) {
         player.y = pY - player.h;
-        player.vy = p.vy; // Karakter ikut bergerak naik-turun bersama platform
+        player.vy = p.vy;
         player.grounded = true;
         player.jumpsLeft = 2;
       }
@@ -548,7 +525,7 @@ function update() {
     else b.bumpY = 0;
   });
 
-  // Cek Tanah & Jurang
+  // Pijakan Tanah & Jurang
   grounds.forEach(g => {
     if (player.x + player.w / 2 >= g.x1 && player.x + player.w / 2 <= g.x2) {
       if (player.y + player.h >= groundLevel) {
@@ -560,14 +537,15 @@ function update() {
     }
   });
 
-  if (player.y > canvas.height + 70) {
+  if (player.y > canvas.height + 80) {
     restartGame();
   }
 
-  // Update Kura-Kura
+  // --- Logika Kura-kura yang Telah Diperbaiki (Anti Bug Mati Sendiri) ---
   turtles.forEach(t => {
-    let tGroundY = groundLevel - t.y - (t.state === "shell" ? 30 : 44);
+    let tGroundY = groundLevel - t.y - (t.state === "walk" ? 44 : 28);
     t.actualY = tGroundY;
+    const tH = (t.state === "walk") ? 44 : 28;
 
     if (t.state === "walk") {
       t.x += t.vx;
@@ -576,29 +554,38 @@ function update() {
       t.x += t.vx;
     }
 
-    const tH = t.state === "shell" ? 30 : 44;
+    // Cek Benturan Pemain dengan Kura-kura
     if (player.x + player.w > t.x && player.x < t.x + t.w && player.y + player.h > tGroundY && player.y < tGroundY + tH) {
-      if (player.vy > 0 && player.y + player.h - player.vy <= tGroundY + 16) {
+      // 1. Pemain melompat menginjak dari atas
+      if (player.vy > 0 && (player.y + player.h - player.vy) <= tGroundY + 18) {
         player.vy = -10.5;
         player.jumpsLeft = 2;
-        playSound("stomp");
+
         if (t.state === "walk") {
           t.state = "shell";
           t.vx = 0;
+          playSound("stomp");
         } else if (t.state === "shell") {
+          // Dari diam menjadi meluncur
           t.state = "slide";
-          t.vx = (player.x < t.x ? 8.5 : -8.5);
+          t.vx = (player.x + player.w / 2 < t.x + t.w / 2) ? 8.5 : -8.5;
           playSound("kick");
         } else if (t.state === "slide") {
+          // Menghentikan tempurung yang sedang meluncur
           t.state = "shell";
           t.vx = 0;
+          playSound("stomp");
         }
-      } else {
+      } 
+      // 2. Pemain bersentuhan dari samping
+      else {
         if (t.state === "shell") {
+          // Menendang tempurung diam ke depan (Bira TIDAK mati!)
           t.state = "slide";
-          t.vx = (player.x < t.x ? 8.5 : -8.5);
+          t.vx = (player.x + player.w / 2 < t.x + t.w / 2) ? 8.5 : -8.5;
           playSound("kick");
-        } else {
+        } else if (t.state === "walk" || t.state === "slide") {
+          // Tertabrak kura-kura berjalan atau tempurung yang meluncur kencang
           restartGame();
         }
       }
@@ -615,7 +602,7 @@ function update() {
     if (c.life <= 0) popCoins.splice(i, 1);
   }
 
-  // Kamera Dinamis Mengikuti Perjalanan Jauh
+  // Kamera Dinamis
   const targetCam = player.x - canvas.width * 0.35;
   camera.x += (targetCam - camera.x) * 0.12;
   if (camera.x < 0) camera.x = 0;
@@ -630,12 +617,12 @@ function drawTurtle(t) {
     ctx.fillStyle = "#f5b041";
     ctx.beginPath();
     ctx.arc(8, 38, 7, 0, Math.PI * 2);
-    ctx.arc(36, 38, 7, 0, Math.PI * 2);
+    ctx.arc(34, 38, 7, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "#27ae60";
     ctx.beginPath();
-    ctx.ellipse(22, 22, 18, 16, 0, 0, Math.PI * 2);
+    ctx.ellipse(21, 22, 17, 16, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#145a32";
     ctx.lineWidth = 3;
@@ -643,7 +630,7 @@ function drawTurtle(t) {
 
     ctx.fillStyle = "#2ecc71";
     ctx.beginPath();
-    ctx.arc(22, 22, 9, 0, Math.PI * 2);
+    ctx.arc(21, 22, 8, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "#f5b041";
@@ -655,45 +642,46 @@ function drawTurtle(t) {
     ctx.arc(0, 12, 2.5, 0, Math.PI * 2);
     ctx.fill();
   } else {
+    // Tempurung Diam / Meluncur
     ctx.fillStyle = "#27ae60";
     ctx.beginPath();
-    ctx.ellipse(t.w / 2, 15, 20, 14, 0, 0, Math.PI * 2);
+    ctx.ellipse(t.w / 2, 14, 19, 13, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#145a32";
     ctx.lineWidth = 3;
     ctx.stroke();
     ctx.fillStyle = "#f1c40f";
-    ctx.fillRect(4, 12, t.w - 8, 5);
+    ctx.fillRect(4, 11, t.w - 8, 5);
   }
   ctx.restore();
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const groundLevel = canvas.height - 90;
+  const groundLevel = canvas.height - 150;
 
   ctx.save();
   ctx.translate(-camera.x, 0);
 
-  // Awan Sepanjang Level
+  // Awan
   ctx.fillStyle = "#ffffffaa";
   for (let i = 0; i < 40; i++) {
     const cx = i * 260 + 40;
     ctx.beginPath();
-    ctx.arc(cx, 95, 30, 0, Math.PI * 2);
-    ctx.arc(cx + 30, 85, 40, 0, Math.PI * 2);
-    ctx.arc(cx + 60, 95, 30, 0, Math.PI * 2);
+    ctx.arc(cx, 85, 30, 0, Math.PI * 2);
+    ctx.arc(cx + 30, 75, 40, 0, Math.PI * 2);
+    ctx.arc(cx + 60, 85, 30, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Tanah & Jurang
+  // Tanah Rumput & Jurang yang Lebih Tinggi dari Tombol
   grounds.forEach(g => {
     ctx.fillStyle = "#5cb82a";
-    ctx.fillRect(g.x1, groundLevel, g.x2 - g.x1, 20);
+    ctx.fillRect(g.x1, groundLevel, g.x2 - g.x1, 22);
     ctx.fillStyle = "#3e8c16";
-    ctx.fillRect(g.x1, groundLevel + 16, g.x2 - g.x1, 5);
+    ctx.fillRect(g.x1, groundLevel + 18, g.x2 - g.x1, 5);
     ctx.fillStyle = "#a85d26";
-    ctx.fillRect(g.x1, groundLevel + 21, g.x2 - g.x1, canvas.height - groundLevel);
+    ctx.fillRect(g.x1, groundLevel + 23, g.x2 - g.x1, canvas.height - groundLevel);
   });
 
   // Platform Mengambang (Lift)
@@ -719,7 +707,7 @@ function draw() {
       ctx.lineWidth = 3;
       ctx.strokeRect(b.x, bY, b.w, b.h);
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 24px sans-serif";
+      ctx.font = "bold 22px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(b.hit ? "•" : "?", b.x + b.w / 2, bY + b.h / 2 + 1);
@@ -782,7 +770,7 @@ function draw() {
     ctx.restore();
   });
 
-  // Bira Asli
+  // Gambar Karakter BIRA
   ctx.save();
   ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
   if (player.facing === -1) ctx.scale(-1, 1);
