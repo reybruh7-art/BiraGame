@@ -3,13 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Bira Super Adventure</title>
+<title>BIRA Super Adventure</title>
 <style>
   * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
-  body, html { width: 100%; height: 100%; overflow: hidden; background: #5c94fc; touch-action: none; font-family: system-ui, sans-serif; }
+  body, html { width: 100%; height: 100%; overflow: hidden; background: #609df8; touch-action: none; font-family: 'Segoe UI', system-ui, sans-serif; }
   canvas { display: block; width: 100vw; height: 100vh; }
-  
-  /* UI Header */
+
   #ui {
     position: fixed;
     top: max(16px, env(safe-area-inset-top));
@@ -17,15 +16,16 @@
     right: 20px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     color: white;
     font-weight: 900;
-    font-size: 20px;
-    text-shadow: 2px 2px #000;
+    font-size: 19px;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
     pointer-events: none;
     z-index: 10;
   }
+  .tag { background: rgba(0,0,0,0.35); padding: 6px 14px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.4); }
 
-  /* Kontrol Touch Android */
   #controls {
     position: fixed;
     inset: 0;
@@ -35,53 +35,80 @@
   .d-pad {
     position: absolute;
     left: max(20px, env(safe-area-inset-left));
-    bottom: max(25px, env(safe-area-inset-bottom));
+    bottom: max(22px, env(safe-area-inset-bottom));
     display: flex;
-    gap: 15px;
+    gap: 16px;
     pointer-events: auto;
   }
   .btn-action {
     position: absolute;
-    right: max(25px, env(safe-area-inset-right));
-    bottom: max(25px, env(safe-area-inset-bottom));
+    right: max(24px, env(safe-area-inset-right));
+    bottom: max(22px, env(safe-area-inset-bottom));
     pointer-events: auto;
   }
   .touch-btn {
-    width: 68px;
-    height: 68px;
-    background: rgba(255, 255, 255, 0.4);
-    border: 3px solid rgba(255, 255, 255, 0.85);
+    width: 72px;
+    height: 72px;
+    background: rgba(255, 255, 255, 0.45);
+    border: 3px solid #ffffff;
     border-radius: 50%;
     color: #fff;
     font-size: 26px;
-    font-weight: bold;
+    font-weight: 900;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
     touch-action: none;
   }
   .touch-btn:active {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.85);
     transform: scale(0.92);
   }
   #btn-jump {
-    width: 80px;
-    height: 80px;
+    width: 82px;
+    height: 82px;
     background: #e52521;
-    border-color: #fff;
-    font-size: 18px;
+    border: 3.5px solid #fff;
+    font-size: 17px;
+    letter-spacing: 0.5px;
   }
   #btn-jump:active {
     background: #ff5753;
+  }
+
+  /* Pop up Kemenangan */
+  #win-screen {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 50;
+    backdrop-filter: blur(6px);
+  }
+  #win-screen h1 { font-size: 34px; color: #ffeb3b; text-shadow: 0 4px 10px rgba(0,0,0,0.6); margin-bottom: 8px; }
+  #win-screen button {
+    margin-top: 18px;
+    padding: 12px 28px;
+    font-size: 18px;
+    font-weight: 800;
+    background: #4caf50;
+    border: none;
+    border-radius: 30px;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   }
 </style>
 </head>
 <body>
 
 <div id="ui">
-  <div>BIRA <span style="font-size:14px; display:block; color:#ffeb3b;">WORLD 1-1</span></div>
-  <div id="score">COIN: 0</div>
+  <div class="tag">🌿 BIRA <span style="font-size:12px; color:#ffeb3b; display:inline-block; margin-left:6px;">STAGE 1-1</span></div>
+  <div class="tag" id="score-txt">🪙 COIN: 0</div>
 </div>
 
 <div id="controls">
@@ -92,6 +119,12 @@
   <div class="btn-action">
     <div class="touch-btn" id="btn-jump">JUMP</div>
   </div>
+</div>
+
+<div id="win-screen">
+  <h1>🏆 STAGE CLEAR!</h1>
+  <p id="final-coins">Koin Berhasil Didapatkan: 0</p>
+  <button onclick="restartGame()">MAIN LAGI</button>
 </div>
 
 <canvas id="game"></canvas>
@@ -107,77 +140,175 @@ function resize() {
 resize();
 window.addEventListener("resize", resize);
 
-// Asset Gambar Karakter BIRA
-const biraImg = new Image();
-biraImg.src = "https://raw.githubusercontent.com/reybruh7-art/BiraGame/main/1000335566.png"; 
+// Asset SVG BIRA Asli Beresolusi Tinggi
+const biraSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 550" width="400" height="550">
+  <path d="M200,120 Q190,40 240,10 Q265,50 220,120 Z" fill="#88d813" stroke="#5da107" stroke-width="5"/>
+  <path d="M225,20 Q245,45 220,70" fill="none" stroke="#d5f549" stroke-width="4"/>
+  <path d="M235,130 Q330,80 340,155 Q290,200 235,170 Z" fill="#46aa22" stroke="#2c7512" stroke-width="5"/>
+  <path d="M200,50 Q160,80 185,120 Z" fill="#58b81d"/>
+  <path d="M200,105 C110,105 85,185 85,260 C85,345 135,395 200,395 C265,395 315,345 315,260 C315,185 290,105 200,105 Z" fill="#82d311" stroke="#5ea807" stroke-width="6"/>
+  <path d="M200,140 Q215,160 215,178 C215,190 207,198 200,198 C193,198 185,190 185,178 Q185,160 200,140 Z" fill="#00b9ff" stroke="#007db8" stroke-width="3"/>
+  <ellipse cx="196" cy="165" rx="3" ry="8" fill="#ffffff" opacity="0.75" transform="rotate(-15 196 165)"/>
+  <path d="M200,170 C140,170 120,215 120,265 C120,320 155,340 200,340 C245,340 280,320 280,265 C280,215 260,170 200,170 Z" fill="#fff7e6"/>
+  <ellipse cx="160" cy="245" rx="20" ry="26" fill="#1f1109"/>
+  <circle cx="152" cy="235" r="7" fill="#ffffff"/>
+  <circle cx="167" cy="254" r="3.5" fill="#ffffff"/>
+  <ellipse cx="240" cy="245" rx="20" ry="26" fill="#1f1109"/>
+  <circle cx="232" cy="235" r="7" fill="#ffffff"/>
+  <circle cx="247" cy="254" r="3.5" fill="#ffffff"/>
+  <path d="M145,215 Q160,206 175,216" fill="none" stroke="#529b09" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M225,216 Q240,206 255,215" fill="none" stroke="#529b09" stroke-width="4.5" stroke-linecap="round"/>
+  <ellipse cx="138" cy="275" rx="14" ry="8" fill="#ff8d85" opacity="0.8"/>
+  <ellipse cx="262" cy="275" rx="14" ry="8" fill="#ff8d85" opacity="0.8"/>
+  <path d="M178,280 Q200,322 222,280 Q200,292 178,280 Z" fill="#bb1328" stroke="#820817" stroke-width="3"/>
+  <path d="M188,288 Q200,282 212,288 Q200,314 188,288 Z" fill="#ff5d66"/>
+  <g stroke="#2c7512" stroke-width="3.5" fill="#359819">
+    <path d="M135,350 Q165,335 185,360 Q155,375 135,350 Z"/>
+    <path d="M175,355 Q200,335 225,355 Q200,385 175,355 Z"/>
+    <path d="M215,360 Q235,335 265,350 Q245,375 215,360 Z"/>
+  </g>
+  <path d="M130,345 C115,375 110,430 145,465 C180,490 220,490 255,465 C290,430 285,375 270,345 Z" fill="#82d311" stroke="#5ea807" stroke-width="6"/>
+  <path d="M200,390 C180,390 162,408 162,430 C162,455 200,470 200,470 C200,470 238,455 238,430 C238,408 220,390 200,390 Z" fill="#1e8b38" stroke="#ffffff" stroke-width="3"/>
+  <text x="200" y="437" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="19" fill="#ffffff" text-anchor="middle">BIRA</text>
+  <path d="M135,460 C125,485 120,530 155,532 C178,534 180,505 178,470 Z" fill="#78c90d" stroke="#5ea807" stroke-width="5"/>
+  <path d="M265,460 C275,485 280,530 245,532 C222,534 220,505 222,470 Z" fill="#78c90d" stroke="#5ea807" stroke-width="5"/>
+  <path d="M125,370 Q75,340 50,300 Q65,280 90,320 Q105,345 130,380 Z" fill="#78c90d" stroke="#5ea807" stroke-width="5"/>
+  <path d="M275,380 Q325,410 355,420 Q350,445 315,435 Q295,415 270,395 Z" fill="#78c90d" stroke="#5ea807" stroke-width="5"/>
+</svg>`;
 
-// Parameter Game
+const biraImg = new Image();
+biraImg.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(biraSVG);
+
+// Game Logic & State
 let score = 0;
-const gravity = 0.55;
+let gameFinished = false;
+const gravity = 0.58;
 const camera = { x: 0 };
 
 const player = {
-  x: 100,
+  x: 80,
   y: 200,
-  width: 52,
-  height: 75,
+  w: 52,
+  h: 72,
   vx: 0,
   vy: 0,
   speed: 4.8,
   grounded: false,
+  jumpsLeft: 2,
   facing: 1
 };
 
-// Balok & Rintangan (Platform Level)
-const blocks = [
-  { x: 300, y: 0, w: 50, h: 50, type: "q", hit: false },
-  { x: 350, y: 0, w: 50, h: 50, type: "brick" },
-  { x: 400, y: 0, w: 50, h: 50, type: "q", hit: false },
-  { x: 450, y: 0, w: 50, h: 50, type: "brick" },
-  { x: 500, y: 0, w: 50, h: 50, type: "q", hit: false },
-  { x: 700, y: 0, w: 120, h: 70, type: "pipe" },
-  { x: 950, y: 0, w: 50, h: 50, type: "brick" },
-  { x: 1000, y: 0, w: 50, h: 50, type: "q", hit: false },
-  { x: 1050, y: 0, w: 50, h: 50, type: "brick" },
-  { x: 1250, y: 0, w: 120, h: 100, type: "pipe" },
-  { x: 1550, y: 0, w: 60, h: 60, type: "q", hit: false },
-  { x: 1800, y: 0, w: 40, h: 320, type: "flag" }
+// Efek Animasi Koin Terbang
+const popCoins = [];
+
+// Segmen Lantai (Termasuk Jurang Maut)
+const grounds = [
+  { x1: 0, x2: 950 },
+  { x1: 1080, x2: 2150 },
+  { x1: 2320, x2: 3600 }
 ];
 
-const coins = [
-  { x: 315, y: 0, collected: false },
-  { x: 415, y: 0, collected: false },
-  { x: 515, y: 0, collected: false },
-  { x: 745, y: 0, collected: false },
-  { x: 1015, y: 0, collected: false }
-];
+// Obstacle Padat (Bata, Balok ?, Pipa Berisi Tanaman, Tangga Piramida)
+let blocks = [];
+function initBlocks() {
+  blocks = [
+    // Area 1: Pengenalan Balok Koin & Bata
+    { x: 260, y: 140, w: 48, h: 48, type: "q", hit: false, bumpY: 0 },
+    { x: 308, y: 140, w: 48, h: 48, type: "brick" },
+    { x: 356, y: 140, w: 48, h: 48, type: "q", hit: false, bumpY: 0 },
+    { x: 404, y: 140, w: 48, h: 48, type: "brick" },
+    { x: 452, y: 140, w: 48, h: 48, type: "q", hit: false, bumpY: 0 },
 
-// Input Controller
-const keys = { left: false, right: false, jump: false };
+    // Pipa Rintangan Rendah & Sedang
+    { x: 620, y: 0, w: 68, h: 70, type: "pipe" },
+    { x: 800, y: 0, w: 68, h: 105, type: "pipe" },
 
-function setupTouch(id, key) {
-  const el = document.getElementById(id);
-  el.addEventListener("pointerdown", (e) => { e.preventDefault(); keys[key] = true; });
-  el.addEventListener("pointerup", (e) => { e.preventDefault(); keys[key] = false; });
-  el.addEventListener("pointercancel", (e) => { e.preventDefault(); keys[key] = false; });
+    // Area 2: Balok Melayang di Atas Jurang
+    { x: 1000, y: 150, w: 48, h: 48, type: "q", hit: false, bumpY: 0 },
+
+    // Platform Gantung Berlapis
+    { x: 1200, y: 130, w: 48, h: 48, type: "brick" },
+    { x: 1248, y: 130, w: 48, h: 48, type: "q", hit: false, bumpY: 0 },
+    { x: 1296, y: 130, w: 48, h: 48, type: "brick" },
+    { x: 1248, y: 230, w: 48, h: 48, type: "q", hit: false, bumpY: 0 },
+
+    // Pipa Tinggi
+    { x: 1480, y: 0, w: 72, h: 140, type: "pipe" },
+
+    // Tangga Piramida Klasik Super Mario
+    { x: 1720, y: 0, w: 42, h: 42, type: "brick" },
+    { x: 1762, y: 0, w: 42, h: 84, type: "brick" },
+    { x: 1804, y: 0, w: 42, h: 126, type: "brick" },
+    { x: 1846, y: 0, w: 42, h: 168, type: "brick" },
+    { x: 1960, y: 0, w: 42, h: 168, type: "brick" },
+    { x: 2002, y: 0, w: 42, h: 126, type: "brick" },
+    { x: 2044, y: 0, w: 42, h: 84, type: "brick" },
+    { x: 2086, y: 0, w: 42, h: 42, type: "brick" },
+
+    // Pipa Ganda di Dekat Jurang Kedua
+    { x: 2420, y: 0, w: 70, h: 80, type: "pipe" },
+    { x: 2620, y: 0, w: 70, h: 120, type: "pipe" },
+
+    // Garis Finish: Tiang Bendera dan Kastil
+    { x: 3000, y: 0, w: 20, h: 320, type: "flagpole", flagY: 300 },
+    { x: 3120, y: 0, w: 160, h: 140, type: "castle" }
+  ];
 }
-setupTouch("btn-left", "left");
-setupTouch("btn-right", "right");
-setupTouch("btn-jump", "jump");
+initBlocks();
 
-window.addEventListener("keydown", (e) => {
+// Input Handler
+const keys = { left: false, right: false };
+
+function handleJumpPress() {
+  if (player.jumpsLeft > 0) {
+    player.vy = -13.5;
+    player.jumpsLeft--;
+    player.grounded = false;
+  }
+}
+
+function bindBtn(id, pressFn, releaseFn) {
+  const el = document.getElementById(id);
+  el.addEventListener("pointerdown", e => { e.preventDefault(); pressFn(); });
+  if (releaseFn) {
+    el.addEventListener("pointerup", e => { e.preventDefault(); releaseFn(); });
+    el.addEventListener("pointercancel", e => { e.preventDefault(); releaseFn(); });
+  }
+}
+bindBtn("btn-left", () => keys.left = true, () => keys.left = false);
+bindBtn("btn-right", () => keys.right = true, () => keys.right = false);
+bindBtn("btn-jump", handleJumpPress);
+
+window.addEventListener("keydown", e => {
   if (e.code === "ArrowLeft" || e.key === "a") keys.left = true;
   if (e.code === "ArrowRight" || e.key === "d") keys.right = true;
-  if (e.code === "Space" || e.code === "ArrowUp" || e.key === "w") keys.jump = true;
+  if (e.code === "Space" || e.code === "ArrowUp" || e.key === "w") {
+    if (!e.repeat) handleJumpPress();
+  }
 });
-window.addEventListener("keyup", (e) => {
+window.addEventListener("keyup", e => {
   if (e.code === "ArrowLeft" || e.key === "a") keys.left = false;
   if (e.code === "ArrowRight" || e.key === "d") keys.right = false;
-  if (e.code === "Space" || e.code === "ArrowUp" || e.key === "w") keys.jump = false;
 });
 
+function restartGame() {
+  player.x = 80;
+  player.y = 200;
+  player.vx = 0;
+  player.vy = 0;
+  player.jumpsLeft = 2;
+  score = 0;
+  gameFinished = false;
+  document.getElementById("score-txt").innerText = "🪙 COIN: 0";
+  document.getElementById("win-screen").style.display = "none";
+  initBlocks();
+}
+
 function update() {
-  const groundY = canvas.height - 110;
+  if (gameFinished) return;
+
+  const groundLevel = canvas.height - 90;
 
   // Gerakan Horizontal
   if (keys.left) {
@@ -187,145 +318,247 @@ function update() {
     player.vx = player.speed;
     player.facing = 1;
   } else {
-    player.vx *= 0.8;
-  }
-
-  // Lompat
-  if (keys.jump && player.grounded) {
-    player.vy = -14.5;
-    player.grounded = false;
+    player.vx *= 0.76;
   }
 
   // Gravitasi
   player.vy += gravity;
+
+  // Gerakan Sumbu X & Cek Tabrakan Dinding Solid
   player.x += player.vx;
-  player.y += player.vy;
-
-  // Cek Tanah
-  if (player.y + player.height >= groundY) {
-    player.y = groundY - player.height;
-    player.vy = 0;
-    player.grounded = true;
-  } else {
-    player.grounded = false;
-  }
-
-  // Cek Balok
   blocks.forEach(b => {
-    let bY = groundY - (b.type === "pipe" ? b.h : b.type === "flag" ? b.h : 140);
-    b.actualY = bY;
+    let bY = groundLevel - (b.type === "flagpole" || b.type === "castle" ? b.h : b.type === "pipe" ? b.h : b.y);
+    let bH = (b.type === "pipe" || b.type === "castle" || b.type === "flagpole") ? b.h : b.h;
 
-    // Collision Box sederhana
-    if (player.x + player.width > b.x && player.x < b.x + b.w) {
-      if (player.y + player.height > bY && player.y < bY + b.h) {
-        // Mendarat di atas balok
-        if (player.vy > 0 && player.y + player.height - player.vy <= bY + 12) {
-          player.y = bY - player.height;
+    // Jangan tabrakan samping dengan tiang bendera
+    if (b.type === "flagpole") return;
+
+    if (player.x + player.w > b.x && player.x < b.x + b.w && player.y + player.h > bY && player.y < bY + bH) {
+      if (player.vx > 0) {
+        player.x = b.x - player.w;
+        player.vx = 0;
+      } else if (player.vx < 0) {
+        player.x = b.x + b.w;
+        player.vx = 0;
+      }
+    }
+  });
+
+  // Gerakan Sumbu Y & Cek Tabrakan Atas/Bawah Solid
+  player.y += player.vy;
+  player.grounded = false;
+
+  blocks.forEach(b => {
+    let bY = groundLevel - (b.type === "flagpole" || b.type === "castle" ? b.h : b.type === "pipe" ? b.h : b.y);
+    let bH = (b.type === "pipe" || b.type === "castle" || b.type === "flagpole") ? b.h : b.h;
+
+    // Cek Finish di Tiang Bendera
+    if (b.type === "flagpole") {
+      if (player.x + player.w >= b.x && player.x <= b.x + b.w && player.y + player.h >= bY) {
+        gameFinished = true;
+        b.flagY = 30;
+        setTimeout(() => {
+          document.getElementById("final-coins").innerText = "Total Koin: " + score;
+          document.getElementById("win-screen").style.display = "flex";
+        }, 600);
+      }
+      return;
+    }
+
+    if (player.x + player.w > b.x + 4 && player.x < b.x + b.w - 4) {
+      if (player.y + player.h >= bY && player.y < bY + bH) {
+        // Mendarat di atas obstacle
+        if (player.vy > 0 && (player.y + player.h - player.vy) <= bY + 14) {
+          player.y = bY - player.h;
           player.vy = 0;
           player.grounded = true;
-        } 
-        // Menyeruduk balok dari bawah
-        else if (player.vy < 0 && player.y - player.vy >= bY + b.h - 12) {
-          player.y = bY + b.h;
+          player.jumpsLeft = 2; // Reset double jump
+        }
+        // Menyundul balok dari bawah
+        else if (player.vy < 0 && (player.y - player.vy) >= bY + bH - 14) {
+          player.y = bY + bH;
           player.vy = 2;
+
+          // Animasi Sundul & Koin Balok (?)
           if (b.type === "q" && !b.hit) {
             b.hit = true;
+            b.bumpY = -12;
             score += 100;
-            document.getElementById("score").innerText = "COIN: " + score;
+            document.getElementById("score-txt").innerText = "🪙 COIN: " + score;
+            popCoins.push({ x: b.x + b.w / 2, y: bY, vy: -7, life: 30, angle: 0 });
           }
         }
       }
     }
   });
 
-  // Kamera mengikuti pemain
-  camera.x = player.x - canvas.width * 0.35;
+  // Animasi balik balok yang disundul
+  blocks.forEach(b => {
+    if (b.bumpY < 0) b.bumpY += 1.5;
+    else b.bumpY = 0;
+  });
+
+  // Cek Lantai Tanah & Jurang
+  let onSolidGround = false;
+  grounds.forEach(g => {
+    if (player.x + player.w / 2 >= g.x1 && player.x + player.w / 2 <= g.x2) {
+      if (player.y + player.h >= groundLevel) {
+        player.y = groundLevel - player.h;
+        player.vy = 0;
+        player.grounded = true;
+        player.jumpsLeft = 2; // Reset double jump
+        onSolidGround = true;
+      }
+    }
+  });
+
+  // Jika Jatuh ke Jurang -> Reset
+  if (player.y > canvas.height + 60) {
+    restartGame();
+  }
+
+  // Update Koin Terbang
+  for (let i = popCoins.length - 1; i >= 0; i--) {
+    const c = popCoins[i];
+    c.y += c.vy;
+    c.vy += 0.4;
+    c.angle += 0.3;
+    c.life--;
+    if (c.life <= 0) popCoins.splice(i, 1);
+  }
+
+  // Kamera Dinamis Mengikuti Posisi Karakter
+  const targetCam = player.x - canvas.width * 0.35;
+  camera.x += (targetCam - camera.x) * 0.12;
+  if (camera.x < 0) camera.x = 0;
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const groundY = canvas.height - 110;
+  const groundLevel = canvas.height - 90;
 
   ctx.save();
   ctx.translate(-camera.x, 0);
 
-  // Awan & Bukit Latar Belakang
-  ctx.fillStyle = "#ffffff99";
-  for (let i = 0; i < 15; i++) {
+  // Awan di Langit
+  ctx.fillStyle = "#ffffffaa";
+  for (let i = 0; i < 20; i++) {
+    const cx = i * 290 + 60;
     ctx.beginPath();
-    ctx.arc(i * 350 + 100, 120, 35, 0, Math.PI * 2);
-    ctx.arc(i * 350 + 135, 110, 45, 0, Math.PI * 2);
-    ctx.arc(i * 350 + 170, 120, 35, 0, Math.PI * 2);
+    ctx.arc(cx, 100, 30, 0, Math.PI * 2);
+    ctx.arc(cx + 30, 90, 40, 0, Math.PI * 2);
+    ctx.arc(cx + 60, 100, 30, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Tanah Rumput & Tanah Cokelat
-  ctx.fillStyle = "#489e22";
-  ctx.fillRect(camera.x, groundY, canvas.width, 22);
-  ctx.fillStyle = "#9c5722";
-  ctx.fillRect(camera.x, groundY + 22, canvas.width, canvas.height - (groundY + 22));
+  // Gambar Tanah & Jurang Maut
+  grounds.forEach(g => {
+    // Rumput Atas
+    ctx.fillStyle = "#5cb82a";
+    ctx.fillRect(g.x1, groundLevel, g.x2 - g.x1, 20);
+    ctx.fillStyle = "#3e8c16";
+    ctx.fillRect(g.x1, groundLevel + 16, g.x2 - g.x1, 5);
 
-  // Gambar Balok
+    // Tanah Cokelat
+    ctx.fillStyle = "#a85d26";
+    ctx.fillRect(g.x1, groundLevel + 21, g.x2 - g.x1, canvas.height - groundLevel);
+  });
+
+  // Gambar Semua Rintangan (Obstacles)
   blocks.forEach(b => {
-    let bY = b.actualY || (groundY - 140);
+    let bY = (groundLevel - (b.type === "flagpole" || b.type === "castle" ? b.h : b.type === "pipe" ? b.h : b.y)) + (b.bumpY || 0);
+
     if (b.type === "q") {
-      ctx.fillStyle = b.hit ? "#8e6741" : "#fcb42c";
+      ctx.fillStyle = b.hit ? "#9e7751" : "#fca019";
       ctx.fillRect(b.x, bY, b.w, b.h);
-      ctx.strokeStyle = "#000";
+      ctx.strokeStyle = "#381a03";
       ctx.lineWidth = 3;
       ctx.strokeRect(b.x, bY, b.w, b.h);
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 24px monospace";
-      ctx.fillText(b.hit ? "•" : "?", b.x + 18, bY + 34);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 26px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(b.hit ? "•" : "?", b.x + b.w / 2, bY + b.h / 2 + 1);
     } else if (b.type === "brick") {
-      ctx.fillStyle = "#b84418";
+      ctx.fillStyle = "#b8471b";
       ctx.fillRect(b.x, bY, b.w, b.h);
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#2f0a00";
+      ctx.lineWidth = 2.5;
       ctx.strokeRect(b.x, bY, b.w, b.h);
+      // Pola bata
+      ctx.beginPath();
+      ctx.moveTo(b.x, bY + b.h / 2); ctx.lineTo(b.x + b.w, bY + b.h / 2);
+      ctx.moveTo(b.x + b.w / 2, bY); ctx.lineTo(b.x + b.w / 2, bY + b.h / 2);
+      ctx.stroke();
     } else if (b.type === "pipe") {
-      ctx.fillStyle = "#1e9624";
+      // Badan Pipa
+      ctx.fillStyle = "#229c29";
+      ctx.fillRect(b.x + 5, bY + 22, b.w - 10, b.h - 22);
+      ctx.strokeStyle = "#003b05";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(b.x + 5, bY + 22, b.w - 10, b.h - 22);
+      // Bibir Pipa
+      ctx.fillStyle = "#2ecc40";
+      ctx.fillRect(b.x, bY, b.w, 24);
+      ctx.strokeRect(b.x, bY, b.w, 24);
+    } else if (b.type === "flagpole") {
+      // Tiang Finish
+      ctx.fillStyle = "#eeeeee";
+      ctx.fillRect(b.x + 7, bY, 6, b.h);
+      ctx.fillStyle = "#f1c40f";
+      ctx.beginPath();
+      ctx.arc(b.x + 10, bY, 12, 0, Math.PI * 2);
+      ctx.fill();
+      // Bendera
+      ctx.fillStyle = "#2ecc40";
+      ctx.beginPath();
+      ctx.moveTo(b.x + 13, bY + (b.h - b.flagY));
+      ctx.lineTo(b.x + 65, bY + (b.h - b.flagY) + 20);
+      ctx.lineTo(b.x + 13, bY + (b.h - b.flagY) + 40);
+      ctx.fill();
+    } else if (b.type === "castle") {
+      // Kastil Mini
+      ctx.fillStyle = "#7f8c8d";
       ctx.fillRect(b.x, bY, b.w, b.h);
-      ctx.strokeStyle = "#000";
+      ctx.fillStyle = "#2c3e50";
+      ctx.fillRect(b.x + b.w / 2 - 25, bY + b.h - 60, 50, 60);
+      ctx.strokeStyle = "#1a252f";
       ctx.lineWidth = 3;
       ctx.strokeRect(b.x, bY, b.w, b.h);
-    } else if (b.type === "flag") {
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(b.x, bY, 8, b.h);
-      ctx.fillStyle = "#4caf50";
-      ctx.beginPath();
-      ctx.moveTo(b.x + 8, bY);
-      ctx.lineTo(b.x + 50, bY + 25);
-      ctx.lineTo(b.x + 8, bY + 50);
-      ctx.fill();
     }
   });
 
-  // Gambar Karakter BIRA
+  // Gambar Animasi Koin Melompat
+  popCoins.forEach(c => {
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.scale(Math.cos(c.angle), 1);
+    ctx.fillStyle = "#ffd700";
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#b8860b";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // Gambar Karakter BIRA Asli
   ctx.save();
-  ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-  if (player.facing === -1) {
-    ctx.scale(-1, 1);
-  }
-  
-  if (biraImg.complete && biraImg.naturalWidth > 0) {
-    ctx.drawImage(biraImg, -player.width / 2, -player.height / 2, player.width, player.height);
-  } else {
-    // Cadangan kotak hijau jika gambar sedang memuat
-    ctx.fillStyle = "#8bd414";
-    ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
-  }
+  ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
+  if (player.facing === -1) ctx.scale(-1, 1);
+  ctx.drawImage(biraImg, -player.w / 2 - 4, -player.h / 2 - 6, player.w + 8, player.h + 8);
   ctx.restore();
 
   ctx.restore();
 }
 
-function loop() {
+function gameLoop() {
   update();
   draw();
-  requestAnimationFrame(loop);
+  requestAnimationFrame(gameLoop);
 }
-loop();
+gameLoop();
 </script>
 </body>
 </html>
