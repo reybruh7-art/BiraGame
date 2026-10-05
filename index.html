@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>BIRA Super Adventure</title>
+<title>BIRA — Valley Explorer</title>
 <style>
   * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
-  body, html { width: 100%; height: 100%; overflow: hidden; background: #5c94fc; touch-action: none; font-family: 'Segoe UI', system-ui, sans-serif; }
+  body, html { width: 100%; height: 100%; overflow: hidden; background: #68abf7; touch-action: none; font-family: 'Segoe UI', system-ui, sans-serif; }
   canvas { display: block; width: 100vw; height: 100vh; }
 
   #ui {
@@ -20,11 +20,11 @@
     color: white;
     font-weight: 900;
     font-size: 16px;
-    text-shadow: 2px 2px 0 #000;
+    text-shadow: 2px 2px 0 #1b3815;
     pointer-events: none;
     z-index: 10;
   }
-  .tag { background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.4); }
+  .tag { background: rgba(20, 45, 20, 0.55); padding: 6px 14px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.4); backdrop-filter: blur(4px); }
 
   #controls {
     position: fixed;
@@ -47,10 +47,10 @@
     pointer-events: auto;
   }
   .touch-btn {
-    width: 60px;
-    height: 60px;
+    width: 62px;
+    height: 62px;
     background: rgba(255, 255, 255, 0.35);
-    border: 2px solid rgba(255, 255, 255, 0.8);
+    border: 2.5px solid rgba(255, 255, 255, 0.85);
     border-radius: 50%;
     color: #fff;
     font-size: 22px;
@@ -58,29 +58,30 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     backdrop-filter: blur(4px);
     touch-action: none;
   }
   .touch-btn:active {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.75);
     transform: scale(0.92);
   }
   #btn-jump {
-    width: 72px;
-    height: 72px;
-    background: rgba(229, 37, 33, 0.85);
+    width: 74px;
+    height: 74px;
+    background: rgba(46, 175, 78, 0.85);
     border: 3px solid #fff;
     font-size: 15px;
+    letter-spacing: 0.5px;
   }
   #btn-jump:active {
-    background: #ff5753;
+    background: #47cc6c;
   }
 
   #win-screen {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(14, 38, 16, 0.8);
     display: none;
     flex-direction: column;
     justify-content: center;
@@ -89,24 +90,25 @@
     z-index: 50;
     backdrop-filter: blur(8px);
   }
-  #win-screen h1 { font-size: 32px; color: #ffeb3b; text-shadow: 0 4px 10px rgba(0,0,0,0.6); margin-bottom: 8px; }
+  #win-screen h1 { font-size: 32px; color: #ffeb3b; text-shadow: 0 4px 12px rgba(0,0,0,0.6); margin-bottom: 8px; }
   #win-screen button {
     margin-top: 18px;
-    padding: 12px 28px;
+    padding: 12px 30px;
     font-size: 18px;
     font-weight: 800;
-    background: #4caf50;
+    background: #27ae60;
     border: none;
     border-radius: 30px;
     color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   }
 </style>
 </head>
 <body>
 
 <div id="ui">
-  <div class="tag">🌿 BIRA <span style="font-size:11px; color:#ffeb3b; margin-left:6px;">WORLD 1-1</span></div>
-  <div class="tag" id="score-txt">🪙 COIN: 0</div>
+  <div class="tag">🌿 BIRA <span style="font-size:11px; color:#ffeb3b; margin-left:6px;">VALLEY ZONE 1</span></div>
+  <div class="tag" id="score-txt">✨ SARI BUNGA: 0</div>
 </div>
 
 <div id="controls">
@@ -120,15 +122,15 @@
 </div>
 
 <div id="win-screen">
-  <h1>🏆 STAGE CLEAR!</h1>
-  <p id="final-coins">Total Koin: 0</p>
+  <h1>🌺 PETUALANGAN SELESAI!</h1>
+  <p id="final-coins">Sari Bunga Dikumpulkan: 0</p>
   <button onclick="restartGame()">MAIN LAGI</button>
 </div>
 
 <canvas id="game"></canvas>
 
 <script>
-// Web Audio API Retro Sound
+// Web Audio API Retro Suara Alam Organik
 let audioCtx = null;
 function initAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -141,49 +143,49 @@ function playSound(type) {
 
   if (type === "jump") {
     const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-    osc.type = "square";
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(520, now + 0.12);
-    gain.gain.setValueAtTime(0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(now); osc.stop(now + 0.12);
-  } else if (type === "coin") {
-    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
     osc.type = "sine";
-    osc.frequency.setValueAtTime(987, now);
-    osc.frequency.setValueAtTime(1318, now + 0.08);
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(580, now + 0.11);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.11);
     osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(now); osc.stop(now + 0.35);
-  } else if (type === "stomp") {
+    osc.start(now); osc.stop(now + 0.11);
+  } else if (type === "sparkle") {
     const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(280, now);
-    osc.frequency.exponentialRampToValueAtTime(80, now + 0.14);
-    gain.gain.setValueAtTime(0.35, now);
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.setValueAtTime(1320, now + 0.07);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.28);
+  } else if (type === "bounce") {
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.14);
+    gain.gain.setValueAtTime(0.3, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(now); osc.stop(now + 0.14);
-  } else if (type === "kick") {
+  } else if (type === "slide") {
     const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(140, now);
-    osc.frequency.exponentialRampToValueAtTime(460, now + 0.16);
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(420, now + 0.15);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
     osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(now); osc.stop(now + 0.16);
+    osc.start(now); osc.stop(now + 0.15);
   } else if (type === "win") {
-    [261, 329, 392, 523, 659, 783].forEach((f, i) => {
+    [293, 369, 440, 587, 739, 880].forEach((f, i) => {
       const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(f, now + i * 0.1);
-      gain.gain.setValueAtTime(0.22, now + i * 0.1);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.18);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(f, now + i * 0.11);
+      gain.gain.setValueAtTime(0.22, now + i * 0.11);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.11 + 0.2);
       osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.start(now + i * 0.1); osc.stop(now + i * 0.1 + 0.2);
+      osc.start(now + i * 0.11); osc.stop(now + i * 0.11 + 0.22);
     });
   }
 }
@@ -198,7 +200,7 @@ function resize() {
 resize();
 window.addEventListener("resize", resize);
 
-// Asset SVG BIRA Asli
+// Asset Karakter BIRA Asli
 const biraSVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 550" width="400" height="550">
   <path d="M200,120 Q190,40 240,10 Q265,50 220,120 Z" fill="#88d813" stroke="#5da107" stroke-width="5"/>
@@ -240,7 +242,10 @@ biraImg.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(biraSVG);
 let score = 0;
 let gameFinished = false;
 const gravity = 0.58;
-const camera = { x: 0 };
+
+// Kamera Monotonik (Mencegah Glitch Terhentak Mundur)
+let cameraX = 0;
+let maxCameraReached = 0;
 
 const player = {
   x: 80,
@@ -252,10 +257,11 @@ const player = {
   speed: 4.8,
   grounded: false,
   jumpsLeft: 2,
-  facing: 1
+  facing: 1,
+  safeTimer: 0 // Waktu kebal sesaat setelah interaksi stomp
 };
 
-const popCoins = [];
+const pollenParticles = [];
 
 const grounds = [
   { x1: 0, x2: 950 },
@@ -271,71 +277,77 @@ let movingPlatforms = [];
 
 function initWorld() {
   blocks = [
-    // Area 1
-    { x: 260, y: 120, w: 46, h: 44, type: "brick" },
-    { x: 306, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 352, y: 120, w: 46, h: 44, type: "brick" },
-    { x: 306, y: 220, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    // Area 1: Balok Batu Lumut & Bunga Semanggi
+    { x: 260, y: 120, w: 46, h: 44, type: "stone" },
+    { x: 306, y: 120, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
+    { x: 352, y: 120, w: 46, h: 44, type: "stone" },
+    { x: 306, y: 220, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
 
-    { x: 470, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 516, y: 120, w: 46, h: 44, type: "brick" },
-    { x: 562, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    { x: 470, y: 120, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
+    { x: 516, y: 120, w: 46, h: 44, type: "stone" },
+    { x: 562, y: 120, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
 
-    { x: 740, y: 0, w: 66, h: 68, type: "pipe" },
-    { x: 900, y: 0, w: 66, h: 105, type: "pipe" },
+    // Tunggul Pohon Alami (Pengganti Pipa Mario)
+    { x: 740, y: 0, w: 66, h: 70, type: "stump" },
+    { x: 900, y: 0, w: 66, h: 110, type: "stump" },
 
-    { x: 1010, y: 135, w: 48, h: 44, type: "q", hit: false, bumpY: 0 },
+    // Balok Batu di Atas Jurang
+    { x: 1010, y: 135, w: 48, h: 44, type: "clover", hit: false, bumpY: 0 },
 
-    { x: 1220, y: 125, w: 46, h: 44, type: "brick" },
-    { x: 1266, y: 125, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 1312, y: 125, w: 46, h: 44, type: "brick" },
-    { x: 1266, y: 225, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    // Platform Mengambang Batu Lumut
+    { x: 1220, y: 125, w: 46, h: 44, type: "stone" },
+    { x: 1266, y: 125, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
+    { x: 1312, y: 125, w: 46, h: 44, type: "stone" },
+    { x: 1266, y: 225, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
 
-    { x: 1500, y: 0, w: 68, h: 135, type: "pipe" },
+    { x: 1500, y: 0, w: 68, h: 140, type: "stump" },
 
-    // Piramida Pertama
-    { x: 1720, y: 0, w: 40, h: 40, type: "brick" },
-    { x: 1760, y: 0, w: 40, h: 80, type: "brick" },
-    { x: 1800, y: 0, w: 40, h: 120, type: "brick" },
-    { x: 1840, y: 0, w: 40, h: 160, type: "brick" },
-    { x: 1960, y: 0, w: 40, h: 160, type: "brick" },
-    { x: 2000, y: 0, w: 40, h: 120, type: "brick" },
-    { x: 2040, y: 0, w: 40, h: 80, type: "brick" },
-    { x: 2080, y: 0, w: 40, h: 40, type: "brick" },
+    // Tangga Batu Alam
+    { x: 1720, y: 0, w: 40, h: 40, type: "stone" },
+    { x: 1760, y: 0, w: 40, h: 80, type: "stone" },
+    { x: 1800, y: 0, w: 40, h: 120, type: "stone" },
+    { x: 1840, y: 0, w: 40, h: 160, type: "stone" },
+    { x: 1960, y: 0, w: 40, h: 160, type: "stone" },
+    { x: 2000, y: 0, w: 40, h: 120, type: "stone" },
+    { x: 2040, y: 0, w: 40, h: 80, type: "stone" },
+    { x: 2080, y: 0, w: 40, h: 40, type: "stone" },
 
-    { x: 2520, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 2566, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 2612, y: 120, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
+    // Ekstensi Lintasan Baru
+    { x: 2520, y: 120, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
+    { x: 2566, y: 120, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
+    { x: 2612, y: 120, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
 
-    { x: 2800, y: 0, w: 68, h: 85, type: "pipe" },
-    { x: 3000, y: 0, w: 68, h: 150, type: "pipe" },
+    { x: 2800, y: 0, w: 68, h: 90, type: "stump" },
+    { x: 3000, y: 0, w: 68, h: 150, type: "stump" },
 
-    { x: 3180, y: 135, w: 46, h: 44, type: "brick" },
-    { x: 3226, y: 135, w: 46, h: 44, type: "brick" },
-    { x: 3272, y: 135, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 3318, y: 135, w: 46, h: 44, type: "brick" },
-    { x: 3364, y: 135, w: 46, h: 44, type: "brick" },
+    // Jembatan Gantung Kayu
+    { x: 3180, y: 135, w: 46, h: 44, type: "stone" },
+    { x: 3226, y: 135, w: 46, h: 44, type: "stone" },
+    { x: 3272, y: 135, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
+    { x: 3318, y: 135, w: 46, h: 44, type: "stone" },
+    { x: 3364, y: 135, w: 46, h: 44, type: "stone" },
 
-    { x: 3660, y: 145, w: 46, h: 44, type: "brick" },
-    { x: 3740, y: 165, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 3820, y: 145, w: 46, h: 44, type: "brick" },
+    { x: 3660, y: 145, w: 46, h: 44, type: "stone" },
+    { x: 3740, y: 165, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
+    { x: 3820, y: 145, w: 46, h: 44, type: "stone" },
 
-    { x: 4100, y: 0, w: 68, h: 80, type: "pipe" },
-    { x: 4260, y: 130, w: 46, h: 44, type: "brick" },
-    { x: 4306, y: 130, w: 46, h: 44, type: "q", hit: false, bumpY: 0 },
-    { x: 4352, y: 130, w: 46, h: 44, type: "brick" },
-    { x: 4420, y: 0, w: 68, h: 125, type: "pipe" },
+    { x: 4100, y: 0, w: 68, h: 80, type: "stump" },
+    { x: 4260, y: 130, w: 46, h: 44, type: "stone" },
+    { x: 4306, y: 130, w: 46, h: 44, type: "clover", hit: false, bumpY: 0 },
+    { x: 4352, y: 130, w: 46, h: 44, type: "stone" },
+    { x: 4420, y: 0, w: 68, h: 125, type: "stump" },
 
-    { x: 5350, y: 0, w: 40, h: 40, type: "brick" },
-    { x: 5390, y: 0, w: 40, h: 80, type: "brick" },
-    { x: 5430, y: 0, w: 40, h: 120, type: "brick" },
-    { x: 5470, y: 0, w: 40, h: 160, type: "brick" },
-    { x: 5510, y: 0, w: 40, h: 200, type: "brick" },
-    { x: 5550, y: 0, w: 40, h: 240, type: "brick" },
-    { x: 5590, y: 0, w: 40, h: 280, type: "brick" },
+    { x: 5350, y: 0, w: 40, h: 40, type: "stone" },
+    { x: 5390, y: 0, w: 40, h: 80, type: "stone" },
+    { x: 5430, y: 0, w: 40, h: 120, type: "stone" },
+    { x: 5470, y: 0, w: 40, h: 160, type: "stone" },
+    { x: 5510, y: 0, w: 40, h: 200, type: "stone" },
+    { x: 5550, y: 0, w: 40, h: 240, type: "stone" },
+    { x: 5590, y: 0, w: 40, h: 280, type: "stone" },
 
-    { x: 6000, y: 0, w: 20, h: 320, type: "flagpole", flagY: 300 },
-    { x: 6150, y: 0, w: 180, h: 160, type: "castle" }
+    // Pohon Suci Penanda Finish (Pengganti Tiang Mario)
+    { x: 6000, y: 0, w: 22, h: 320, type: "finish_tree", leafY: 300 },
+    { x: 6150, y: 0, w: 180, h: 170, type: "sanctuary" }
   ];
 
   movingPlatforms = [
@@ -343,19 +355,14 @@ function initWorld() {
     { x: 5070, y: 100, w: 85, h: 18, minY: 70, maxY: 230, vy: 1.5 }
   ];
 
-  // Musuh: Kura-kura di darat & Burung di udara
+  // Musuh: Siput Hutan (Darat) & Burung Walet (Udara)
   enemies = [
-    // Kura-kura darat
-    { kind: "turtle", x: 500, y: 0, w: 42, h: 44, vx: -1.3, state: "walk", minX: 420, maxX: 700 },
-    { kind: "turtle", x: 1360, y: 0, w: 42, h: 44, vx: -1.4, state: "walk", minX: 1120, maxX: 1650 },
-    
-    // Burung Melayang di Udara (Menggantikan kura-kura melayang)
-    { kind: "bird", x: 1900, y: 180, w: 44, h: 36, vx: 1.3, state: "fly", minX: 1800, maxX: 2100, wingAngle: 0 },
-    { kind: "bird", x: 3250, y: 190, w: 44, h: 36, vx: 1.2, state: "fly", minX: 3160, maxX: 3430, wingAngle: 0 },
-
-    // Musuh darat lainnya
-    { kind: "turtle", x: 2700, y: 0, w: 42, h: 44, vx: -1.3, state: "walk", minX: 2450, maxX: 2950 },
-    { kind: "turtle", x: 4600, y: 0, w: 42, h: 44, vx: -1.6, state: "walk", minX: 4450, maxX: 4900 }
+    { kind: "snail", x: 500, y: 0, w: 42, h: 38, vx: -1.2, state: "walk", minX: 420, maxX: 700 },
+    { kind: "snail", x: 1360, y: 0, w: 42, h: 38, vx: -1.3, state: "walk", minX: 1120, maxX: 1650 },
+    { kind: "bird", x: 1900, y: 180, w: 44, h: 34, vx: 1.3, state: "fly", minX: 1800, maxX: 2100, wingAngle: 0 },
+    { kind: "bird", x: 3250, y: 190, w: 44, h: 34, vx: 1.2, state: "fly", minX: 3160, maxX: 3430, wingAngle: 0 },
+    { kind: "snail", x: 2700, y: 0, w: 42, h: 38, vx: -1.3, state: "walk", minX: 2450, maxX: 2950 },
+    { kind: "snail", x: 4600, y: 0, w: 42, h: 38, vx: -1.5, state: "walk", minX: 4450, maxX: 4900 }
   ];
 }
 initWorld();
@@ -407,9 +414,12 @@ function restartGame() {
   player.vx = 0;
   player.vy = 0;
   player.jumpsLeft = 2;
+  player.safeTimer = 0;
   score = 0;
+  cameraX = 0;
+  maxCameraReached = 0;
   gameFinished = false;
-  document.getElementById("score-txt").innerText = "🪙 COIN: 0";
+  document.getElementById("score-txt").innerText = "✨ SARI BUNGA: 0";
   document.getElementById("win-screen").style.display = "none";
   initWorld();
 }
@@ -418,6 +428,8 @@ function update() {
   if (gameFinished) return;
 
   const groundLevel = canvas.height - 150;
+
+  if (player.safeTimer > 0) player.safeTimer--;
 
   if (keys.left) {
     player.vx = -player.speed;
@@ -436,12 +448,12 @@ function update() {
     if (p.y > p.maxY || p.y < p.minY) p.vy *= -1;
   });
 
-  // Tabrakan Horizontal (Dinding Kiri/Kanan)
+  // Tabrakan Horizontal Dinding
   player.x += player.vx;
   blocks.forEach(b => {
-    let bY = groundLevel - (b.type === "flagpole" || b.type === "castle" ? b.h : b.type === "pipe" ? b.h : b.y);
+    let bY = groundLevel - (b.type === "finish_tree" || b.type === "sanctuary" ? b.h : b.type === "stump" ? b.h : b.y);
     let bH = b.h;
-    if (b.type === "flagpole") return;
+    if (b.type === "finish_tree") return;
 
     if (player.x + player.w > b.x && player.x < b.x + b.w && player.y + player.h > bY && player.y < bY + bH) {
       if (player.vx > 0) {
@@ -454,21 +466,21 @@ function update() {
     }
   });
 
-  // Tabrakan Vertikal (Atas/Bawah)
+  // Tabrakan Vertikal Atas / Bawah
   player.y += player.vy;
   player.grounded = false;
 
   blocks.forEach(b => {
-    let bY = groundLevel - (b.type === "flagpole" || b.type === "castle" ? b.h : b.type === "pipe" ? b.h : b.y);
+    let bY = groundLevel - (b.type === "finish_tree" || b.type === "sanctuary" ? b.h : b.type === "stump" ? b.h : b.y);
     let bH = b.h;
 
-    if (b.type === "flagpole") {
+    if (b.type === "finish_tree") {
       if (player.x + player.w >= b.x && player.x <= b.x + b.w && player.y + player.h >= bY) {
         gameFinished = true;
         playSound("win");
-        b.flagY = 30;
+        b.leafY = 30;
         setTimeout(() => {
-          document.getElementById("final-coins").innerText = "Total Koin: " + score;
+          document.getElementById("final-coins").innerText = "Total Sari Bunga: " + score;
           document.getElementById("win-screen").style.display = "flex";
         }, 600);
       }
@@ -485,13 +497,13 @@ function update() {
         } else if (player.vy < 0 && (player.y - player.vy) >= bY + bH - 14) {
           player.y = bY + bH;
           player.vy = 2;
-          if (b.type === "q" && !b.hit) {
+          if (b.type === "clover" && !b.hit) {
             b.hit = true;
             b.bumpY = -12;
             score += 100;
-            playSound("coin");
-            document.getElementById("score-txt").innerText = "🪙 COIN: " + score;
-            popCoins.push({ x: b.x + b.w / 2, y: bY, vy: -7.5, life: 32, angle: 0 });
+            playSound("sparkle");
+            document.getElementById("score-txt").innerText = "✨ SARI BUNGA: " + score;
+            pollenParticles.push({ x: b.x + b.w / 2, y: bY, vy: -7.5, life: 32, angle: 0 });
           }
         }
       }
@@ -530,19 +542,16 @@ function update() {
     restartGame();
   }
 
-  // --- Update Musuh (Kura-Kura & Burung) ---
+  // --- Logika Musuh (Siput & Burung) yang Diperbaiki Bebas Bug ---
   enemies.forEach(e => {
-    if (e.kind === "bird") {
-      // Burung mengepakkan sayap
-      e.wingAngle = (e.wingAngle || 0) + 0.2;
-    }
+    if (e.kind === "bird") e.wingAngle = (e.wingAngle || 0) + 0.22;
 
-    let isShell = (e.state === "shell" || e.state === "slide");
-    let eH = isShell ? 28 : (e.kind === "bird" ? 34 : 44);
-    
-    // Jatuh ke lantai saat berubah jadi telur/shell
-    if (isShell && e.y > 0) {
-      e.y = Math.max(0, e.y - 4);
+    const isDefeatedState = (e.state === "shell" || e.state === "slide");
+    const eH = isDefeatedState ? 24 : (e.kind === "bird" ? 34 : 38);
+
+    // Telur / Cangkang jatuh ke tanah
+    if (isDefeatedState && e.y > 0) {
+      e.y = Math.max(0, e.y - 5);
     }
 
     let eGroundY = groundLevel - e.y - eH;
@@ -555,33 +564,38 @@ function update() {
       e.x += e.vx;
     }
 
-    // Interaksi Pemain dengan Musuh
-    if (player.x + player.w > e.x && player.x < e.x + e.w && player.y + player.h > eGroundY && player.y < eGroundY + eH) {
-      // Menginjak dari atas
-      if (player.vy > 0 && (player.y + player.h - player.vy) <= eGroundY + 18) {
+    // Deteksi benturan BIRA dengan Musuh / Telur
+    if (player.x + player.w > e.x && player.x < e.x + e.w && player.y + player.h > eGroundY && player.y < eGroundY + eH + 4) {
+      // Menginjak dari atas (Stomp) - Diberi toleransi aman
+      const isFallingOnTop = (player.vy >= 0) || (player.y + player.h <= eGroundY + 16);
+
+      if (isFallingOnTop) {
         player.vy = -10.5;
         player.jumpsLeft = 2;
+        player.safeTimer = 15; // Beri kebal 15 frame agar tidak tertabrak instan
 
         if (e.state === "walk" || e.state === "fly") {
           e.state = "shell";
           e.vx = 0;
-          playSound("stomp");
+          playSound("bounce");
         } else if (e.state === "shell") {
           e.state = "slide";
           e.vx = (player.x + player.w / 2 < e.x + e.w / 2) ? 8.5 : -8.5;
-          playSound("kick");
+          playSound("slide");
         } else if (e.state === "slide") {
           e.state = "shell";
           e.vx = 0;
-          playSound("stomp");
+          playSound("bounce");
         }
       } 
       // Menyentuh dari samping
-      else {
+      else if (player.safeTimer === 0) {
         if (e.state === "shell") {
+          // Menendang cangkang/telur diam
           e.state = "slide";
           e.vx = (player.x + player.w / 2 < e.x + e.w / 2) ? 8.5 : -8.5;
-          playSound("kick");
+          player.safeTimer = 12;
+          playSound("slide");
         } else if (e.state === "walk" || e.state === "fly" || e.state === "slide") {
           restartGame();
         }
@@ -589,125 +603,137 @@ function update() {
     }
   });
 
-  // Animasi Koin Melompat
-  for (let i = popCoins.length - 1; i >= 0; i--) {
-    const c = popCoins[i];
+  // Animasi Partikel Sari Bunga Melayang
+  for (let i = pollenParticles.length - 1; i >= 0; i--) {
+    const c = pollenParticles[i];
     c.y += c.vy;
     c.vy += 0.45;
     c.angle += 0.3;
     c.life--;
-    if (c.life <= 0) popCoins.splice(i, 1);
+    if (c.life <= 0) pollenParticles.splice(i, 1);
   }
 
-  // Kamera Dinamis
-  const targetCam = player.x - canvas.width * 0.35;
-  camera.x += (targetCam - camera.x) * 0.12;
-  if (camera.x < 0) camera.x = 0;
+  // --- Kamera Stabil Monotonik (Bebas Glitch Mundur) ---
+  const idealCamX = player.x - canvas.width * 0.35;
+  if (idealCamX > maxCameraReached) {
+    maxCameraReached = idealCamX;
+  }
+  // Kamera hanya bergerak maju secara halus, tidak pernah tersentak mundur
+  cameraX += (maxCameraReached - cameraX) * 0.1;
+  if (cameraX < 0) cameraX = 0;
 }
 
+// Menggambar Musuh Orisinal (Siput & Burung Walet)
 function drawEnemy(e) {
   ctx.save();
   ctx.translate(e.x, e.actualY);
 
   if (e.kind === "bird") {
-    // --- GAMBAR BURUNG ---
     if (e.state === "fly") {
       if (e.vx > 0) { ctx.scale(-1, 1); ctx.translate(-e.w, 0); }
-      
-      // Badan Burung
-      ctx.fillStyle = "#e67e22";
+      // Badan Burung Hutan Biru Toska
+      ctx.fillStyle = "#1abc9c";
       ctx.beginPath();
-      ctx.ellipse(22, 18, 16, 13, 0, 0, Math.PI * 2);
+      ctx.ellipse(22, 17, 16, 12, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Perut Kuning
+      // Perut Kuning Emas
       ctx.fillStyle = "#f1c40f";
       ctx.beginPath();
-      ctx.ellipse(25, 22, 10, 8, 0, 0, Math.PI * 2);
+      ctx.ellipse(26, 21, 10, 7, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Sayap Beranimasi
-      const wingY = Math.sin(e.wingAngle) * 7;
-      ctx.fillStyle = "#d35400";
+      // Sayap Mengepak
+      const wingY = Math.sin(e.wingAngle) * 6;
+      ctx.fillStyle = "#16a085";
       ctx.beginPath();
-      ctx.moveTo(14, 16);
-      ctx.lineTo(24, 6 + wingY);
-      ctx.lineTo(28, 16);
+      ctx.moveTo(14, 15);
+      ctx.lineTo(24, 5 + wingY);
+      ctx.lineTo(28, 15);
       ctx.fill();
 
       // Mata
       ctx.fillStyle = "#fff";
       ctx.beginPath();
-      ctx.arc(10, 14, 4.5, 0, Math.PI * 2);
+      ctx.arc(10, 13, 4, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#000";
       ctx.beginPath();
-      ctx.arc(8.5, 14, 2, 0, Math.PI * 2);
+      ctx.arc(8.5, 13, 1.8, 0, Math.PI * 2);
       ctx.fill();
 
-      // Paruh
-      ctx.fillStyle = "#f39c12";
-      ctx.beginPath();
-      ctx.moveTo(6, 15);
-      ctx.lineTo(-4, 18);
-      ctx.lineTo(6, 21);
-      ctx.fill();
-    } else {
-      // Telur / Tempurung Bulat Burung saat diinjak
+      // Paruh Oranye
       ctx.fillStyle = "#e67e22";
       ctx.beginPath();
-      ctx.ellipse(e.w / 2, 14, 18, 13, 0, 0, Math.PI * 2);
+      ctx.moveTo(6, 14);
+      ctx.lineTo(-4, 17);
+      ctx.lineTo(6, 20);
       ctx.fill();
-      ctx.strokeStyle = "#a04000";
-      ctx.lineWidth = 3;
+    } else {
+      // Telur Burung Polkadot Halus (Saat Diinjak)
+      ctx.fillStyle = "#d1f2eb";
+      ctx.beginPath();
+      ctx.ellipse(e.w / 2, 12, 17, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#16a085";
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      ctx.fillStyle = "#f1c40f";
+      ctx.fillStyle = "#1abc9c";
       ctx.beginPath();
-      ctx.arc(e.w / 2, 14, 6, 0, Math.PI * 2);
+      ctx.arc(e.w / 2 - 4, 11, 2.5, 0, Math.PI * 2);
+      ctx.arc(e.w / 2 + 5, 14, 2, 0, Math.PI * 2);
       ctx.fill();
     }
   } else {
-    // --- GAMBAR KURA-KURA ---
+    // Siput Hutan (Forest Snail)
     if (e.state === "walk") {
       if (e.vx > 0) { ctx.scale(-1, 1); ctx.translate(-e.w, 0); }
-      ctx.fillStyle = "#f5b041";
+      // Tubuh Kenyal Siput
+      ctx.fillStyle = "#e59866";
       ctx.beginPath();
-      ctx.arc(8, 38, 7, 0, Math.PI * 2);
-      ctx.arc(34, 38, 7, 0, Math.PI * 2);
+      ctx.ellipse(14, 30, 14, 6, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = "#27ae60";
+      // Tentakel Mata
+      ctx.strokeStyle = "#d35400";
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(21, 22, 17, 16, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#145a32";
-      ctx.lineWidth = 3;
+      ctx.moveTo(6, 26); ctx.lineTo(2, 18);
       ctx.stroke();
-
-      ctx.fillStyle = "#2ecc71";
-      ctx.beginPath();
-      ctx.arc(21, 22, 8, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#f5b041";
-      ctx.beginPath();
-      ctx.arc(2, 14, 10, 0, Math.PI * 2);
-      ctx.fill();
       ctx.fillStyle = "#000";
+      ctx.beginPath(); ctx.arc(2, 18, 2, 0, Math.PI * 2); ctx.fill();
+
+      // Cangkang Spiral Cokelat Kayu
+      ctx.fillStyle = "#a0522d";
       ctx.beginPath();
-      ctx.arc(0, 12, 2.5, 0, Math.PI * 2);
+      ctx.arc(26, 22, 14, 0, Math.PI * 2);
       ctx.fill();
-    } else {
-      ctx.fillStyle = "#27ae60";
-      ctx.beginPath();
-      ctx.ellipse(e.w / 2, 14, 19, 13, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#145a32";
+      ctx.strokeStyle = "#6e2c00";
       ctx.lineWidth = 3;
       ctx.stroke();
-      ctx.fillStyle = "#f1c40f";
-      ctx.fillRect(4, 11, e.w - 8, 5);
+
+      // Pola Pusaran Spiral
+      ctx.strokeStyle = "#edbb99";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(26, 22, 7, 0, Math.PI * 1.5);
+      ctx.stroke();
+    } else {
+      // Cangkang Siput Bergulung
+      ctx.fillStyle = "#a0522d";
+      ctx.beginPath();
+      ctx.arc(e.w / 2, 12, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#6e2c00";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.strokeStyle = "#edbb99";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(e.w / 2, 12, 6, 0, Math.PI * 1.5);
+      ctx.stroke();
     }
   }
   ctx.restore();
@@ -718,9 +744,9 @@ function draw() {
   const groundLevel = canvas.height - 150;
 
   ctx.save();
-  ctx.translate(-camera.x, 0);
+  ctx.translate(-cameraX, 0);
 
-  // Awan
+  // Awan Alam Lembut
   ctx.fillStyle = "#ffffffaa";
   for (let i = 0; i < 40; i++) {
     const cx = i * 260 + 40;
@@ -731,103 +757,126 @@ function draw() {
     ctx.fill();
   }
 
-  // Tanah Rumput & Jurang
+  // Padang Rumput Lembah & Lapisan Tanah
   grounds.forEach(g => {
-    ctx.fillStyle = "#5cb82a";
+    ctx.fillStyle = "#48a825";
     ctx.fillRect(g.x1, groundLevel, g.x2 - g.x1, 22);
-    ctx.fillStyle = "#3e8c16";
+    ctx.fillStyle = "#2d7513";
     ctx.fillRect(g.x1, groundLevel + 18, g.x2 - g.x1, 5);
-    ctx.fillStyle = "#a85d26";
+    ctx.fillStyle = "#784212";
     ctx.fillRect(g.x1, groundLevel + 23, g.x2 - g.x1, canvas.height - groundLevel);
   });
 
-  // Platform Mengambang (Lift)
+  // Jembatan Kayu Bergerak
   movingPlatforms.forEach(p => {
     let pY = groundLevel - p.y;
-    ctx.fillStyle = "#f39c12";
+    ctx.fillStyle = "#b9770e";
     ctx.fillRect(p.x, pY, p.w, p.h);
-    ctx.strokeStyle = "#7e4a00";
+    ctx.strokeStyle = "#6e2c00";
     ctx.lineWidth = 3;
     ctx.strokeRect(p.x, pY, p.w, p.h);
-    ctx.fillStyle = "#ffffff66";
-    ctx.fillRect(p.x + 4, pY + 3, p.w - 8, 4);
+    // Tekstur bilah kayu
+    ctx.fillStyle = "#f5cba7";
+    ctx.fillRect(p.x + 4, pY + 3, p.w - 8, 3);
   });
 
-  // Obstacle (Balok, Pipa, Tangga, Finish)
+  // Rintangan Alam Orisinal
   blocks.forEach(b => {
-    let bY = (groundLevel - (b.type === "flagpole" || b.type === "castle" ? b.h : b.type === "pipe" ? b.h : b.y)) + (b.bumpY || 0);
+    let bY = (groundLevel - (b.type === "finish_tree" || b.type === "sanctuary" ? b.h : b.type === "stump" ? b.h : b.y)) + (b.bumpY || 0);
 
-    if (b.type === "q") {
-      ctx.fillStyle = b.hit ? "#9e7751" : "#fca019";
+    if (b.type === "clover") {
+      // Balok Semanggi Emas
+      ctx.fillStyle = b.hit ? "#7d6608" : "#f1c40f";
       ctx.fillRect(b.x, bY, b.w, b.h);
-      ctx.strokeStyle = "#381a03";
+      ctx.strokeStyle = "#b7950b";
       ctx.lineWidth = 3;
       ctx.strokeRect(b.x, bY, b.w, b.h);
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 22px sans-serif";
+      // Ikon Daun Semanggi
+      ctx.fillStyle = b.hit ? "#b7950b" : "#27ae60";
+      ctx.font = "bold 24px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(b.hit ? "•" : "?", b.x + b.w / 2, bY + b.h / 2 + 1);
-    } else if (b.type === "brick") {
-      ctx.fillStyle = "#b8471b";
-      ctx.fillRect(b.x, bY, b.w, b.h);
-      ctx.strokeStyle = "#2f0a00";
-      ctx.lineWidth = 2.5;
-      ctx.strokeRect(b.x, bY, b.w, b.h);
-      ctx.beginPath();
-      ctx.moveTo(b.x, bY + b.h / 2); ctx.lineTo(b.x + b.w, bY + b.h / 2);
-      ctx.moveTo(b.x + b.w / 2, bY); ctx.lineTo(b.x + b.w / 2, bY + b.h / 2);
-      ctx.stroke();
-    } else if (b.type === "pipe") {
-      ctx.fillStyle = "#229c29";
-      ctx.fillRect(b.x + 5, bY + 22, b.w - 10, b.h - 22);
-      ctx.strokeStyle = "#003b05";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(b.x + 5, bY + 22, b.w - 10, b.h - 22);
-      ctx.fillStyle = "#2ecc40";
-      ctx.fillRect(b.x, bY, b.w, 24);
-      ctx.strokeRect(b.x, bY, b.w, 24);
-    } else if (b.type === "flagpole") {
-      ctx.fillStyle = "#eee";
-      ctx.fillRect(b.x + 7, bY, 6, b.h);
-      ctx.fillStyle = "#f1c40f";
-      ctx.beginPath();
-      ctx.arc(b.x + 10, bY, 12, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#2ecc40";
-      ctx.beginPath();
-      ctx.moveTo(b.x + 13, bY + (b.h - b.flagY));
-      ctx.lineTo(b.x + 65, bY + (b.h - b.flagY) + 20);
-      ctx.lineTo(b.x + 13, bY + (b.h - b.flagY) + 40);
-      ctx.fill();
-    } else if (b.type === "castle") {
+      ctx.fillText(b.hit ? "•" : "☘", b.x + b.w / 2, bY + b.h / 2 + 1);
+    } else if (b.type === "stone") {
+      // Batu Alam Berlumut
       ctx.fillStyle = "#7f8c8d";
       ctx.fillRect(b.x, bY, b.w, b.h);
-      ctx.fillStyle = "#2c3e50";
-      ctx.fillRect(b.x + b.w / 2 - 30, bY + b.h - 70, 60, 70);
-      ctx.strokeStyle = "#1a252f";
+      ctx.strokeStyle = "#34495e";
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(b.x, bY, b.w, b.h);
+      // Aksen Lumut Hijau di Atas Batu
+      ctx.fillStyle = "#27ae60";
+      ctx.fillRect(b.x + 2, bY + 2, b.w - 4, 7);
+    } else if (b.type === "stump") {
+      // Tunggul Pohon Berongga
+      ctx.fillStyle = "#873600";
+      ctx.fillRect(b.x + 4, bY + 16, b.w - 8, b.h - 16);
+      ctx.strokeStyle = "#4d2200";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(b.x + 4, bY + 16, b.w - 8, b.h - 16);
+      // Penampang Irisan Kayu Atas
+      ctx.fillStyle = "#edbb99";
+      ctx.beginPath();
+      ctx.ellipse(b.x + b.w / 2, bY + 16, b.w / 2 - 2, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#512e10";
+      ctx.beginPath();
+      ctx.ellipse(b.x + b.w / 2, bY + 16, 7, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (b.type === "finish_tree") {
+      // Pohon Suci Berdaun Emas
+      ctx.fillStyle = "#6e2c00";
+      ctx.fillRect(b.x + 7, bY, 8, b.h);
+      ctx.fillStyle = "#f39c12";
+      ctx.beginPath();
+      ctx.arc(b.x + 11, bY, 13, 0, Math.PI * 2);
+      ctx.fill();
+      // Lambang Daun Kemenangan Turun
+      ctx.fillStyle = "#2ecc71";
+      ctx.beginPath();
+      ctx.arc(b.x + 28, bY + (b.h - b.leafY) + 15, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 14px sans-serif";
+      ctx.fillText("🌿", b.x + 28, bY + (b.h - b.leafY) + 19);
+    } else if (b.type === "sanctuary") {
+      // Kuil Hutan Suci
+      ctx.fillStyle = "#5d6d7e";
+      ctx.fillRect(b.x, bY, b.w, b.h);
+      ctx.fillStyle = "#1b2631";
+      ctx.fillRect(b.x + b.w / 2 - 28, bY + b.h - 75, 56, 75);
+      ctx.strokeStyle = "#283747";
       ctx.lineWidth = 3.5;
       ctx.strokeRect(b.x, bY, b.w, b.h);
+      // Atap Berlumut
+      ctx.fillStyle = "#27ae60";
+      ctx.beginPath();
+      ctx.moveTo(b.x - 10, bY);
+      ctx.lineTo(b.x + b.w / 2, bY - 30);
+      ctx.lineTo(b.x + b.w + 10, bY);
+      ctx.fill();
     }
   });
 
   enemies.forEach(drawEnemy);
 
-  popCoins.forEach(c => {
+  // Butiran Sari Bunga Emas
+  pollenParticles.forEach(c => {
     ctx.save();
     ctx.translate(c.x, c.y);
     ctx.scale(Math.cos(c.angle), 1);
-    ctx.fillStyle = "#ffd700";
+    ctx.fillStyle = "#f1c40f";
     ctx.beginPath();
     ctx.arc(0, 0, 13, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "#b8860b";
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#b7950b";
+    ctx.lineWidth = 2.5;
     ctx.stroke();
     ctx.restore();
   });
 
-  // Gambar BIRA
+  // Gambar Karakter BIRA
   ctx.save();
   ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
   if (player.facing === -1) ctx.scale(-1, 1);
